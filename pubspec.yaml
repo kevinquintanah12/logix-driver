@@ -1,0 +1,77 @@
+name: shop
+description: FlutterShop is a premium E-commerce UI kit that you can use to build various e-commerce apps using Flutter that works on both Android & iOS. This kit contains 100+ nicely crafted minimal screens that cover everything you need for your shop app.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.19.4 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_nav_bar: ^5.0.7
+  cupertino_icons: ^1.0.2
+  flutter_svg: ^2.0.9
+  form_field_validator: ^1.1.0
+  cached_network_image: ^3.2.0
+  flutter_rating_bar: ^4.0.1
+  flutter_widget_from_html_core: ^0.15.1
+  animations: ^2.0.11
+  url_launcher: ^6.3.0
+  shared_preferences: ^2.0.9  # Usa la última versión disponible
+  google_maps_flutter: ^2.0.6
+  flutter_map: ^3.0.0
+  latlong2: ^0.8.1
+  http: ^0.13.5
+  fluttertoast: ^8.0.9
+  persistent_bottom_nav_bar_v2: ^5.3.1
+
+
+  
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  english_words: ^4.0.0
+  provider: ^6.0.0
+  connectivity_plus: ^5.0.0
+  graphql_flutter: ^5.1.2
+#  graphql_flutter: ^5.1.0
+  shared_preferences: ^2.2.0
+
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/Illustration/
+    - assets/flags/
+    - assets/logo/
+    - assets/screens/
+
+  fonts:
+    - family: Plus Jakarta
+      fonts:
+        - asset: assets/fonts/plus_jakarta/PlusJakartaDisplay-Regular.otf
+        - asset: assets/fonts/plus_jakarta/PlusJakartaDisplay-Medium.otf
+          weight: 500
+        - asset: assets/fonts/plus_jakarta/PlusJakartaDisplay-Bold.otf
+          weight: 700
+    - family: Grandis Extended
+      fonts:
+        - asset: assets/fonts/grandis_extended/GrandisExtended-Regular.ttf
+        - asset: assets/fonts/grandis_extended/GrandisExtended-Thin.ttf
+          weight: 300
+        - asset: assets/fonts/grandis_extended/GrandisExtended-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/grandis_extended/GrandisExtended-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/grandis_extended/GrandisExtended-Black.ttf
+          weight: 900
