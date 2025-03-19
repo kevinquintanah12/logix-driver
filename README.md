@@ -110,20 +110,26 @@ Si estás utilizando Firebase para la autenticación o el almacenamiento en la a
 ### 1️⃣ **Ejecutar la aplicación Flutter**
 
 1. Abre el proyecto en tu editor (Android Studio o Visual Studio Code).
-2. Conecta tu dispositivo móvil o usa un emulador.
-3. Ejecuta la aplicación con el siguiente comando:
+2. Instalar Dependencias
+Ejecuta el siguiente comando para obtener todas las dependencias necesarias para el proyecto:
+
+sh
+Copiar
+Editar
+flutter pub get
+3️⃣ Verificar Configuración de Flutter
+Antes de ejecutar la aplicación, asegúrate de que Flutter esté configurado correctamente. Ejecuta:
+
+sh
+Copiar
+Editar
+flutter doctor
+4. Ejecuta la aplicación con el siguiente comando:
 
 ```sh
 flutter run
 ```
 
-### 2️⃣ **Construir y Empacar la Aplicación**
-
-Si quieres crear un archivo APK para Android o una aplicación para otro dispositivo, puedes usar:
-
-```sh
-flutter build apk
-```
 
 ---
 
