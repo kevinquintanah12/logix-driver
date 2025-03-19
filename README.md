@@ -112,18 +112,15 @@ Si estás utilizando Firebase para la autenticación o el almacenamiento en la a
 1. Abre el proyecto en tu editor (Android Studio o Visual Studio Code).
 2. Instalar Dependencias
 Ejecuta el siguiente comando para obtener todas las dependencias necesarias para el proyecto:
-
-sh
-Copiar
-Editar
+```sh
 flutter pub get
+```
 3️⃣ Verificar Configuración de Flutter
 Antes de ejecutar la aplicación, asegúrate de que Flutter esté configurado correctamente. Ejecuta:
 
-sh
-Copiar
-Editar
+```sh
 flutter doctor
+```
 4. Ejecuta la aplicación con el siguiente comando:
 
 ```sh
