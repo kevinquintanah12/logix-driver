@@ -32,11 +32,11 @@ Future<ValueNotifier<GraphQLClient>> getClient() async {
   return client;
 }
 void main() {
-  runApp(MyApp()); // Cambia a MyApp() sin 'const'
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key}); // Asegúrate de eliminar 'const'
+  MyApp({super.key});
 
   // Eliminar const en el GlobalKey
   final GlobalKey<_GraphQLProviderState> _clientKey = GlobalKey<_GraphQLProviderState>();
@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme(context),
             themeMode: ThemeMode.dark,
             onGenerateRoute: router.generateRoute,
-            initialRoute: onSaleScreenRoute,
+            initialRoute: RouteConstants.splashScreenRoute,
           ),
         );
       },

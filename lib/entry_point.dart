@@ -13,9 +13,9 @@ class _EntryPointState extends State<EntryPoint> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    SettingsPage(),
-    DashboardPage(),
-    ProfilePage(),
+    const SettingsPage(),
+    const DashboardPage(),
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {

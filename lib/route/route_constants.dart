@@ -1,8 +1,10 @@
 class RouteConstants {
   static const String onbordingScreenRoute = 'onboarding';
+  static const String splashScreenRoute = 'splashscreen';
 // Otras rutas...
 }
 const String onbordingScreenRoute = "onbording";
+const String splashScreen = "splashscreen";
 const String notificationPermissionScreenRoute = "notification_permission";
 const String preferredLanuageScreenRoute = "preferred_language";
 const String logInScreenRoute = "login";
@@ -10,37 +12,6 @@ const String signUpScreenRoute = "signup";
 const String profileScreenRoute = '/profile';
 const String settingsRoute = '/settings';
 const String dashboardRoute = '/dashboard';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const String signUpVerificationScreenRoute = "signup_verification";
 const String passwordRecoveryScreenRoute = "password_recovery";
