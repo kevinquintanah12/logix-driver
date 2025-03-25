@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+# logix-driver
+=======
 # 🚛 App Driver
 
 **App Driver** es una aplicación móvil desarrollada con **Flutter** para la gestión de viajes y productos en un entorno de transporte logístico. Ofrece funcionalidades para conductores y administradores, como navegación en ruta, control de entregas y monitoreo de condiciones de transporte.  
@@ -130,3 +133,4 @@ flutter run
 
 ---
 
+>>>>>>> f751fb3406232109773d59ea0c86fa14628b7be6

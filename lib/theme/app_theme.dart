@@ -30,6 +30,4 @@ class AppTheme {
       dataTableTheme: dataTableLightThemeData,
     );
   }
-
-  // Dark theme is inclided in the Full template
 }

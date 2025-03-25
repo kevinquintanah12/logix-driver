@@ -57,108 +57,121 @@ class _LoginScreenState extends State<LoginScreen> {
     final Size size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF00AEEF), Color(0xFF0067B1)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SingleChildScrollView(
+  backgroundColor: Colors.white,
+  body: SingleChildScrollView(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: const EdgeInsets.fromLTRB(25, 80, 25, 40),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                height: size.height * 0.35,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 90,
-                      color: Colors.white,
-                    ),
-                    SizedBox(height: 15),
-                    Text(
-                      "Bienvenido!!",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+              Text(
+                "Bienvenido a Logix!",
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
                 ),
               ),
-              Container(
-                width: size.width * 0.85,
-                padding: const EdgeInsets.all(defaultPadding),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
+              SizedBox(height: 15),
+              SizedBox( // Añade un SizedBox para controlar el ancho
+      width: 500, // Ocupa todo el ancho disponible
+      child: Text(
+        "Accede a tu cuenta y garantiza el éxito de cada entrega.",
+        textAlign: TextAlign.center, // Alineación centrada
+        style: TextStyle(
+          fontSize: 18,
+          color: Colors.black54,
+        ),
+      ),
+    ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Inicia Sesión con tu cuenta!",
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(color: Colors.black87),
-                    ),
-                    const SizedBox(height: defaultPadding / 2),
-                    const Text(
-                      "Ingresa tu nombre de usuario y contraseña",
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: defaultPadding),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: usernameController,
-                            decoration: const InputDecoration(
-                              labelText: "Nombre de usuario",
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Por favor ingrese su nombre de usuario";
-                              }
-                              return null;
-                            },
+                    TextFormField(
+  controller: usernameController,
+  decoration: const InputDecoration(
+    labelText: "Correo electrónico",
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide.none,
+    ),
+  ),
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return "Por favor ingrese su correo electrónico";
+    }
+    return null;
+  },
+),
+const SizedBox(height: 25),
+TextFormField(
+  controller: passwordController,
+  obscureText: true,
+  decoration: const InputDecoration(
+    labelText: "Contraseña",
+    prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide.none,
+    ),
+  ),
+  validator: (value) {
+    if (value == null || value.isEmpty) {
+      return "Por favor ingrese su contraseña";
+    }
+    return null;
+  },
+),
+                    const SizedBox(height: 15),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () {
+                          // Acción para olvidó contraseña
+                        },
+                        child: const Text(
+                          "¿Olvidaste tu contraseña?",
+                          style: TextStyle(
+                            color: Color(0xFF6D49AA),
+                            fontWeight: FontWeight.w500,
                           ),
-                          const SizedBox(height: defaultPadding),
-                          TextFormField(
-                            controller: passwordController,
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                              labelText: "Contraseña",
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Por favor ingrese su contraseña";
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: defaultPadding),
+                    const SizedBox(height: 30),
                     Mutation(
+                      // Mantén tu configuración existente de Mutation aquí
                       options: MutationOptions(
                         document: gql(loginPostMutation),
                         onCompleted: (dynamic resultData) async {
@@ -198,30 +211,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       builder: (RunMutation runMutation, QueryResult? result) {
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0067B1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:  const Color(0xFF8353D4),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 15,
-                              horizontal: 30,
-                            ),
-                          ),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              runMutation({
-                                'username': usernameController.text,
-                                'password': passwordController.text,
-                              });
-                            }
-                          },
-                          child: const Center(
-                            child: Text(
-                              "Iniciar Sesión",
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                runMutation({
+                                  'username': usernameController.text,
+                                  'password': passwordController.text,
+                                });
+                              }
+                            },
+                            child: const Text(
+                              "INGRESAR",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         );
@@ -230,11 +244,36 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: size.height * 0.1),
-            ],
+            ),
           ),
         ),
-      ),
-    );
+        const SizedBox(height: 30),
+        Center(
+          child: GestureDetector(
+            onTap: () {
+              // Navegar a pantalla de registro
+            },
+            child: RichText(
+              text: const TextSpan(
+                text: "¿No tienes cuenta? ",
+                style: TextStyle(color: Colors.grey),
+                children: [
+                  TextSpan(
+                    text: "Regístrate aquí",
+                    style: TextStyle(
+                      color:  Color(0xFF6D49AA),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+);
+
   }
 }
