@@ -27,6 +27,7 @@ dependencies:
   http: ^0.13.5
   fluttertoast: ^8.0.9
   persistent_bottom_nav_bar_v2: ^5.3.1
+  flutter_secure_storage: ^5.0.2 # Asegúrate de usar la última versión
 
 
   

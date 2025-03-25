@@ -8,3 +8,4 @@ export 'package:shop/screens/profile/profile.dart';
 export 'package:shop/screens/settings/settings.dart';
 
 export '/route/route_constants.dart';
+export '/screens/auth/views/pinScreenRoute.dart';

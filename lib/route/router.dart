@@ -69,8 +69,6 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (context) => const OnBordingScreen(),
       );
 
-
-
     // case preferredLanuageScreenRoute:
     //   return MaterialPageRoute(
     //     builder: (context) => const PreferredLanguageScreen(),
@@ -80,7 +78,11 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (context) => const LoginScreen(),
       );
 
-    
+    case pinScreenRoute:
+      return MaterialPageRoute(
+        builder: (context) => const PinScreen(),
+      );
+
     case entryPointScreenRoute:
       return MaterialPageRoute(
         builder: (context) => const EntryPoint(),
@@ -93,20 +95,19 @@ Route<dynamic> generateRoute(RouteSettings settings) {
 
     case dashboardRoute:
       return MaterialPageRoute(
-        builder: (context) =>  ProfilePage(),
+        builder: (context) => ProfilePage(),
       );
 
     case settingsRoute:
       return MaterialPageRoute(
-        builder: (context) =>  SettingsPage(),
+        builder: (context) => SettingsPage(),
       );
 
     case profileScreenRoute:
       return MaterialPageRoute(
-        builder: (context) =>  DashboardPage(),
+        builder: (context) => DashboardPage(),
       );
-    
-    
+
     // case profileSetupScreenRoute:
     //   return MaterialPageRoute(
     //     builder: (context) => const ProfileSetupScreen(),
