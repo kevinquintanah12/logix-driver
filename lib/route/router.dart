@@ -77,6 +77,7 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(
         builder: (context) => const LoginScreen(),
       );
+      
 
     case pinScreenRoute:
       return MaterialPageRoute(
