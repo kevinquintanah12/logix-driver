@@ -10,12 +10,11 @@ class EntryPoint extends StatefulWidget {
 }
 
 class _EntryPointState extends State<EntryPoint> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
   final List<Widget> _screens = [
-    const SettingsPage(),
+    const ConfiguracionPage(),
     const DashboardPage(),
-    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -40,10 +39,7 @@ class _EntryPointState extends State<EntryPoint> {
             icon: Icon(CupertinoIcons.home),
             label: "Dashboard",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person),
-            label: "Perfil",
-          ),
+          
         ],
         selectedItemColor: Colors.blue[800],
         unselectedItemColor: CupertinoColors.systemGrey,

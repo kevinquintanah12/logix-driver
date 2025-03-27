@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shop/constants.dart';
+import 'package:shop/route/route_constants.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -11,36 +13,39 @@ class DashboardPage extends StatelessWidget {
         middle: Text('Dashboard'),
       ),
       child: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildDashboardButton(
-                icon: CupertinoIcons.map,
-                label: 'Rutas',
-                onTap: () {
-                  // Acción para rutas
-                },
-              ),
-              const SizedBox(height: 30),
-
-              _buildDashboardButton(
-                icon: CupertinoIcons.cube_box,
-                label: 'Paquetes',
-                onTap: () {
-                  // Acción para paquetes
-                },
-              ),
-              const SizedBox(height: 30),
-
-              _buildDashboardButton(
-                icon: CupertinoIcons.chart_bar,
-                label: 'Sensores',
-                onTap: () {
-                  // Acción para sensores
-                },
-              ),
-            ],
+        child: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              // Si deseas centrar verticalmente cuando haya espacio extra,
+              // puedes ajustar mainAxisAlignment o envolver en un Container de altura fija.
+              children: [
+                const SizedBox(height: 50),
+                _buildDashboardButton(
+                  icon: CupertinoIcons.map,
+                  label: 'Rutas',
+                  onTap: () {
+                    Navigator.pushReplacementNamed(context, rutasAsignadas);
+                  },
+                ),
+                const SizedBox(height: 30),
+                _buildDashboardButton(
+                  icon: CupertinoIcons.cube_box,
+                  label: 'Paquetes',
+                  onTap: () {
+                    Navigator.pushReplacementNamed(context, paquetes);
+                  },
+                ),
+                const SizedBox(height: 30),
+                _buildDashboardButton(
+                  icon: CupertinoIcons.person_fill,
+                  label: 'Perfil',
+                  onTap: () {
+                    Navigator.pushReplacementNamed(context, dashboardRoute );
+                  },
+                ),
+                const SizedBox(height: 50),
+              ],
+            ),
           ),
         ),
       ),
@@ -59,7 +64,7 @@ class DashboardPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(30),
             decoration: BoxDecoration(
-              color: Color(0xFF000814), // Midnight Black
+              color: const Color(0xFF000814), // Midnight Black
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 80, color: Colors.white),
@@ -78,4 +83,3 @@ class DashboardPage extends StatelessWidget {
     );
   }
 }
-

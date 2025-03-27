@@ -5,7 +5,12 @@ export '/screens/auth/views/password_recovery_screen.dart';
 export '/screens/auth/views/signup_screen.dart';
 export 'package:shop/screens/dashboard/dashboard.dart';
 export 'package:shop/screens/profile/profile.dart';
-export 'package:shop/screens/settings/settings.dart';
-
+export 'package:shop/screens/auth/views/enterPin.dart';
 export '/route/route_constants.dart';
 export '/screens/auth/views/pinScreenRoute.dart';
+export '/screens/rutas/rutasAsignadas.dart';
+export '/screens/rutas/rutasMap.dart';
+export '/screens/rutas/rutasDetallada.dart';
+export '/screens/paquetes/paquetes.dart';
+export '/screens/paquetes/entregarPaquetes.dart';
+export '/screens/configuraciones/configuracion.dart';

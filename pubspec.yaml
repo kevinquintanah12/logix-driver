@@ -28,6 +28,22 @@ dependencies:
   fluttertoast: ^8.0.9
   persistent_bottom_nav_bar_v2: ^5.3.1
   flutter_secure_storage: ^5.0.2 # Asegúrate de usar la última versión
+  pinput: ^2.2.22
+  qr_code_scanner: ^1.0.1
+  flutter_webrtc: ^0.13.0
+  camera_platform_interface: ^2.3.1
+  cross_file: ^0.3.1
+  stream_transform: ^2.0.0
+  camera: ^0.10.5+2
+  camera_windows: ^0.2.0
+  zxing2: ^0.2.0 # Biblioteca para leer códigos QR y de barras
+  image: ^4.0.17 # Para procesar imágenes
+
+  # Asegúrate de tener la última versión disponible
+
+
+
+
 
 
   

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:shop/MyAppState.dart';
 import 'package:shop/constants.dart';
 import 'package:shop/route/route_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Mutación para obtener el token (login)
 String loginPostMutation = """
 mutation TokenAuth(\$username: String!, \$password: String!) {
   tokenAuth(
@@ -15,6 +15,21 @@ mutation TokenAuth(\$username: String!, \$password: String!) {
   }
 }
 """;
+
+/// Consulta para verificar si el chofer ya tiene un PIN configurado.
+/// Se asume que el campo 'pin' existe en el tipo de chofer.
+String choferQuery = """
+query {
+  choferAutenticado {
+    id
+    nombre
+    apellidos
+    rfc
+    pin
+  }
+}
+""";
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +45,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  bool isLoading = false; // Controla el estado de carga
+
   // Guardar el token en SharedPreferences
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -42,13 +59,41 @@ class _LoginScreenState extends State<LoginScreen> {
     return prefs.getString('auth_token');
   }
 
-  // Método para verificar si existe un token y redirigir si es el caso
+  // Método para verificar si ya existe un PIN en el chofer
+  Future<void> checkChoferPinStatus() async {
+    final client = GraphQLProvider.of(context).value;
+    final QueryOptions options = QueryOptions(
+      document: gql(choferQuery),
+    );
+    final QueryResult result = await client.query(options);
+
+    if (result.hasException) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al obtener datos del chofer: ${result.exception.toString()}')),
+      );
+      return;
+    }
+
+    final chofer = result.data?['choferAutenticado'];
+    if (chofer != null) {
+      final pin = chofer['pin'];
+      if (pin != null) {
+        // Si el PIN ya está configurado, navegar a la pantalla de ingreso (EnterPinScreen)
+        Navigator.pushReplacementNamed(context, pinEnterScreenRoute);
+      } else {
+        // Si el PIN es null, se redirige a la pantalla para configurarlo (PinScreen)
+        Navigator.pushReplacementNamed(context, pinScreenRoute);
+      }
+    }
+  }
+
+  // Verificar si ya existe token para saltar el login (opcional)
   Future<void> checkForToken() async {
     final token = await getToken();
     if (token != null) {
       print('Token guardado: $token');
-      // Navegar a la pantalla principal sin mostrar el login
-      Navigator.pushReplacementNamed(context, pinScreenRoute);
+      // Al tener token, verificamos si ya existe el PIN configurado
+      checkChoferPinStatus();
     } else {
       print('No hay token guardado');
     }
@@ -115,18 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: const InputDecoration(
                             labelText: "Correo electrónico",
                             border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30)),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30)),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30)),
+                              borderRadius: BorderRadius.all(Radius.circular(30)),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -143,21 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: "Contraseña",
-                            prefixIcon:
-                                Icon(Icons.lock_outlined, color: Colors.grey),
+                            prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey),
                             border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30)),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30)),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30)),
+                              borderRadius: BorderRadius.all(Radius.circular(30)),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -189,6 +211,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           options: MutationOptions(
                             document: gql(loginPostMutation),
                             onCompleted: (dynamic resultData) async {
+                              setState(() {
+                                isLoading = false; // Detener el indicador de carga
+                              });
+
                               if (resultData != null &&
                                   resultData['tokenAuth'] != null &&
                                   resultData['tokenAuth']['token'] != null) {
@@ -201,18 +227,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // Guardar el token en SharedPreferences
                                 await saveToken(token);
                                 print('Token: $token');
-                                // Navegar a la pantalla principal
-                                Navigator.pushNamed(context, pinScreenRoute);
+                                // Verificar si el chofer ya tiene PIN configurado
+                                checkChoferPinStatus();
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text(
-                                        "Error: respuesta inválida del servidor"),
+                                    content: Text("Error: respuesta inválida del servidor"),
                                   ),
                                 );
                               }
                             },
                             onError: (error) {
+                              setState(() {
+                                isLoading = false; // Detener el indicador de carga en caso de error
+                              });
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
@@ -222,35 +251,41 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
                             },
                           ),
-                          builder:
-                              (RunMutation runMutation, QueryResult? result) {
+                          builder: (RunMutation runMutation, QueryResult? result) {
                             return SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF8353D4),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
+                                    setState(() {
+                                      isLoading = true; // Mostrar el indicador de carga
+                                    });
+
                                     runMutation({
                                       'username': usernameController.text,
                                       'password': passwordController.text,
                                     });
                                   }
                                 },
-                                child: const Text(
-                                  "INGRESAR",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                child: isLoading
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    : const Text(
+                                        "INGRESAR",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                               ),
                             );
                           },

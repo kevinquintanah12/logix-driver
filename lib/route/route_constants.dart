@@ -14,6 +14,15 @@ const String profileScreenRoute = '/profile';
 const String settingsRoute = '/settings';
 const String dashboardRoute = '/dashboard';
 const String pinScreenRoute = '/pin';
+const String pinEnterScreenRoute = '/pinEnter';
+const String rutasAsignadas = '/rutasAsignadas';
+const String rutasMap = '/rutasMap';
+const String rutasDetallada = '/rutasDetallada';
+const String paquetes = '/paquetes';
+const String entregarPaquete = '/entregarPaquete';
+const String qrScanner = '/qrScanner';
+const String configuraciones = '/configuracion';
+
 const String signUpVerificationScreenRoute = "signup_verification";
 const String passwordRecoveryScreenRoute = "password_recovery";
 const String verificationMethodScreenRoute = "verification_method";

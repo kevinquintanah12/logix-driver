@@ -77,11 +77,37 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(
         builder: (context) => const LoginScreen(),
       );
-      
+
+    case entregarPaquete:
+      return MaterialPageRoute(
+        builder: (context) => const EntregarPaquete(),
+      );
+
+   
+    
+    case rutasMap:
+      return MaterialPageRoute(
+        builder: (context) => const RutasMap(),
+      );
+
+    case paquetes:
+      return MaterialPageRoute(
+        builder: (context) => const PaquetesAsignados(),
+      );
+
+     case rutasDetallada:
+      return MaterialPageRoute(
+        builder: (context) => const RutaDetallada(),
+      );
 
     case pinScreenRoute:
       return MaterialPageRoute(
         builder: (context) => const PinScreen(),
+      );
+
+      case pinEnterScreenRoute:
+      return MaterialPageRoute(
+        builder: (context) => const EnterPinScreen(),
       );
 
     case entryPointScreenRoute:
@@ -99,14 +125,20 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (context) => ProfilePage(),
       );
 
-    case settingsRoute:
+
+    case configuraciones:
       return MaterialPageRoute(
-        builder: (context) => SettingsPage(),
+        builder: (context) => ConfiguracionPage(),
       );
 
     case profileScreenRoute:
       return MaterialPageRoute(
         builder: (context) => DashboardPage(),
+      );
+
+    case rutasAsignadas:
+      return MaterialPageRoute(
+        builder: (context) => RutasAsignadas(),
       );
 
     // case profileSetupScreenRoute:

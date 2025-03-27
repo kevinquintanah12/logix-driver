@@ -1,36 +1,42 @@
-import 'package:flutter/cupertino.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shop/route/route_constants.dart'; // Asegúrate de tener la constante loginScreenRoute definida
-import 'package:shop/constants.dart';
+import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({Key? key}) : super(key: key);
 
-  // Método para cerrar sesión: elimina el token y navega al login
-  Future<void> _logout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    // Navegar a la pantalla de login y eliminar el historial
-    Navigator.pushReplacementNamed(context, logInScreenRoute);
-  }
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final Color primaryBlue = const Color(0xFF0B3C5D);
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: const Text('Perfil'),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: const Text("Cerrar Sesión"),
-          onPressed: () async {
-            await _logout(context);
-          },
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Perfil del Chofer"),
+        backgroundColor: primaryBlue,
       ),
-      child: const Center(
-        child: Text(
-          'Página de Perfil',
-          style: TextStyle(fontSize: 20),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Información básica del chofer
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: primaryBlue,
+                  child: const Icon(Icons.person, color: Colors.white),
+                ),
+                title: const Text("Nombre del Chofer"),
+                subtitle: const Text("ID: 12345"),
+              ),
+            ),
+          ],
         ),
       ),
     );
