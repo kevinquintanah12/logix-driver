@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pinput/pinput.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shop/route/route_constants.dart';
 
 class EnterPinScreen extends StatefulWidget {
@@ -14,14 +16,68 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   final TextEditingController _pinController = TextEditingController();
 
-  /// Compara el PIN ingresado con el PIN almacenado localmente.
+  // Definir la consulta GraphQL para verificar el PIN
+  final String checkPinQuery = """
+    query CheckPin(\$pin: String!) {
+      checkPin(pin: \$pin)
+    }
+  """;
+
+  /// Método para verificar si ya existe un token y guardarlo en `FlutterSecureStorage`
+  Future<void> _checkForToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    if (token != null) {
+      print("📥 Guardando token en FlutterSecureStorage...");
+      await _storage.write(key: 'auth_token', value: token);
+      print("✅ Token guardado correctamente.");
+    } else {
+      print("⚠️ No se encontró un token en SharedPreferences.");
+    }
+  }
+
+  /// Realiza la consulta GraphQL para verificar si el PIN ingresado es correcto
   Future<void> verifyPin(String enteredPin) async {
-    final storedPin = await _storage.read(key: 'user_pin');
-    if (storedPin != null && storedPin == enteredPin) {
-      // Si el PIN es correcto, navega a la pantalla principal.
+    print("🔹 PIN ingresado: $enteredPin");
+
+    final token = await _storage.read(key: 'auth_token');
+    print("🔹 Token recuperado: $token");
+
+    if (token == null) {
+      print("⚠️ No se encontró un token. Redirigiendo al login...");
+      Navigator.pushNamed(context, logInScreenRoute);
+      return;
+    }
+
+    final client = GraphQLProvider.of(context).value;
+
+    final QueryOptions options = QueryOptions(
+      document: gql(checkPinQuery),
+      variables: {"pin": enteredPin},
+    );
+
+    final result = await client.query(options);
+
+    if (result.hasException) {
+      print("❌ Error en la consulta: ${result.exception.toString()}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${result.exception.toString()}')),
+      );
+      return;
+    }
+
+    print("✅ Respuesta del servidor: ${result.data}");
+
+    final bool? isValid = result.data?['checkPin'];
+    print("🔍 ¿Es válido el PIN? $isValid");
+
+    if (isValid == true) {
+      print("✅ PIN correcto. Redirigiendo...");
+      await _storage.write(key: 'user_pin', value: enteredPin);
       Navigator.pushNamed(context, entryPointScreenRoute);
     } else {
-      // Si el PIN es incorrecto, muestra un error.
+      print("❌ PIN incorrecto. Mostrando mensaje de error.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('PIN incorrecto')),
       );
@@ -29,8 +85,13 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _checkForToken(); // Verifica y guarda el token al iniciar la pantalla
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Definir un tema de PIN que imite el estilo iOS.
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
@@ -41,18 +102,10 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
       ),
     );
 
-    // Opcional: tema para estados enfocados y error.
     final focusedPinTheme = defaultPinTheme.copyWith(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.blueAccent),
-      ),
-    );
-
-    final errorPinTheme = defaultPinTheme.copyWith(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red),
       ),
     );
 
@@ -75,8 +128,6 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
               controller: _pinController,
               defaultPinTheme: defaultPinTheme,
               focusedPinTheme: focusedPinTheme,
-              // Si deseas aplicar un tema de error, puedes controlarlo manualmente.
-              // errorPinTheme: errorPinTheme,
               onCompleted: (pin) {
                 verifyPin(pin);
               },
