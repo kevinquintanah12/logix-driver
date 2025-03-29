@@ -11,14 +11,15 @@ Future<String?> getToken() async {
   return prefs.getString('auth_token');
 }
 
-
 // Función para configurar el cliente GraphQL
 Future<ValueNotifier<GraphQLClient>> getClient() async {
   final token = await getToken();
   final HttpLink httpLink = HttpLink(
     "https://logix-ioz0.onrender.com/graphql/",
     defaultHeaders: {
-      'Authorization': token != null ? 'JWT $token' : '', // Agregar el token JWT si está disponible
+      'Authorization': token != null
+          ? 'JWT $token'
+          : '', // Agregar el token JWT si está disponible
     },
   );
 
@@ -31,6 +32,7 @@ Future<ValueNotifier<GraphQLClient>> getClient() async {
 
   return client;
 }
+
 void main() {
   runApp(MyApp());
 }
@@ -39,7 +41,8 @@ class MyApp extends StatelessWidget {
   MyApp({super.key});
 
   // Eliminar const en el GlobalKey
-  final GlobalKey<_GraphQLProviderState> _clientKey = GlobalKey<_GraphQLProviderState>();
+  final GlobalKey<_GraphQLProviderState> _clientKey =
+      GlobalKey<_GraphQLProviderState>();
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +50,16 @@ class MyApp extends StatelessWidget {
       future: getClient(), // Obtener el cliente con el token
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return MaterialApp(home: Center(child: CircularProgressIndicator())); // Eliminar const
+          return MaterialApp(
+              home:
+                  Center(child: CircularProgressIndicator())); // Eliminar const
         }
 
         if (snapshot.hasError) {
-          return MaterialApp(home: Center(child: Text('Error al obtener el cliente'))); // Eliminar const
+          return MaterialApp(
+              home: Center(
+                  child:
+                      Text('Error al obtener el cliente'))); // Eliminar const
         }
 
         final client = snapshot.data;
@@ -86,7 +94,8 @@ class _GraphQLProviderState extends State<GraphQLProvider> {
         link: HttpLink(
           'https://adsoftsito-api.onrender.com/graphql/',
           defaultHeaders: {
-            'Authorization': 'JWT ${getToken()}', // Aquí puedes obtener el token al inicio
+            'Authorization':
+                'JWT ${getToken()}', // Aquí puedes obtener el token al inicio
           },
         ),
       ),
