@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
+<key>NSAppTransportSecurity</key>
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
@@ -50,6 +51,10 @@
 	<string>http</string>
 	<string>https</string>
 	</array>
+	<key>MBXAccessToken</key>
+	<string>pk.eyJ1IjoiZXRlMTIiLCJhIjoiY204c3luNmw1MDVvdTJscHk2MGNsYXZseSJ9.lsWk079QN6p2c80GZTPonQ</string>
+	 <key>NSAllowsArbitraryLoads</key>
+    <true/>
 
 </dict>
 </plist>
