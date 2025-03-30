@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:shop/constants.dart';
 import 'package:shop/route/route_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -68,6 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final QueryResult result = await client.query(options);
 
     if (result.hasException) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al obtener datos del chofer: ${result.exception.toString()}')),
       );
@@ -108,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
