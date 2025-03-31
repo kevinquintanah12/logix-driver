@@ -10,7 +10,7 @@ class RutasMap extends StatefulWidget {
 }
 
 class _RutasMapState extends State<RutasMap> {
-  final String mapboxToken = "pk.eyJ1IjoiZXRlMTIiLCJhIjoiY204c3luNmw1MDVvdTJscHk2MGNsYXZseSJ9.lsWk079QN6p2c80GZTPonQ"; // Reemplaza con tu token
+  final String mapboxToken = "pk.eyJ1IjoiZXRlMTIiLCJhIjoiY204c3luNmw1MDVvdTJscHk2MGNsYXZseSJ9.lsWk079QN6p2c80GZTPonQ"; 
 
   @override
   Widget build(BuildContext context) {
