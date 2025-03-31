@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RutasMap extends StatefulWidget {
-  const RutasMap({Key? key}) : super(key: key);
+  const RutasMap({super.key});
 
   @override
   State<RutasMap> createState() => _RutasMapState();
