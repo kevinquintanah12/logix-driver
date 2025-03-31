@@ -95,6 +95,7 @@ packages:
     dependency: transitive
     description:
       name: camera_avfoundation
+
       sha256: "6bff67a6821aa094fec2d317735c572264960a0afe034525ee355c4345524243"
       url: "https://pub.dev"
     source: hosted
