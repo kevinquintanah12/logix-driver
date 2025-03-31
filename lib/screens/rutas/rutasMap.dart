@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class RutasMap extends StatefulWidget {
-  const RutasMap({Key? key}) : super(key: key);
+  const RutasMap({super.key});
 
   @override
   State<RutasMap> createState() => _RutasMapState();

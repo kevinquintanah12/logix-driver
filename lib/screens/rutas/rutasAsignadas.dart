@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
 class RutasAsignadas extends StatefulWidget {
   const RutasAsignadas({Key? key}) : super(key: key);
@@ -7,7 +8,8 @@ class RutasAsignadas extends StatefulWidget {
   State<RutasAsignadas> createState() => _RutasAsignadasState();
 }
 
-class _RutasAsignadasState extends State<RutasAsignadas> with SingleTickerProviderStateMixin {
+class _RutasAsignadasState extends State<RutasAsignadas>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool onDuty = true;
 
@@ -101,55 +103,132 @@ class _RutasAsignadasState extends State<RutasAsignadas> with SingleTickerProvid
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/rutasMap');
-        },
-        backgroundColor: primaryBlue,
-        child: const Icon(Icons.map, color: Colors.white),
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rutasMap');
+            },
+            backgroundColor: primaryBlue,
+            child: const Icon(Icons.map, color: Colors.white),
+          ),
+
+          const SizedBox(width: 10),
+
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rutasDetallada');
+            },
+            backgroundColor: Colors.red, 
+            child: const Icon(Icons.map, color: Colors.white), 
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildToDoList(bool isDesktop) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(isDesktop ? 32 : 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'NEXT STOP',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildOrderCard(
-              title: 'Delivery — 11:03 AM',
-              address: 'Main Street, 525, Boston',
-              info: 'Stop: 109 | 120 mins | ORD9392',
-            ),
-          ],
-        ),
-      ),
+    return FutureBuilder(
+      future: fetchRutasPorEstado('por hacer'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.data == null || (snapshot.data as List).isEmpty) {
+          return const Center(child: Text('No hay rutas designadas'));
+        }
+
+        final rutas = snapshot.data as List;
+
+        return Padding(
+          padding: EdgeInsets.all(isDesktop ? 32 : 16),
+          child: ListView.builder(
+            itemCount: rutas.length,
+            itemBuilder: (context, index) {
+              final ruta = rutas[index];
+              return _buildOrderCard(
+                title: 'Delivery — ${ruta['fechaInicio']}',
+                address: ruta['vehiculo']['modelo'],
+                info:
+                    'Stop: ${ruta['id']} | ${ruta['distancia']} mins | ${ruta['conductor']['nombre']}',
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
   Widget _buildCompletedList(bool isDesktop) {
-    return ListView.builder(
-      padding: EdgeInsets.all(isDesktop ? 32 : 16),
-      itemCount: 3,
-      itemBuilder: (context, index) {
-        return _buildOrderCard(
-          title: 'Delivery completado — ${index + 1}',
-          address: 'Dirección X, Ciudad',
-          info: 'Stop: ${index + 100} | 90 mins | ORD900${index + 1}',
+    return FutureBuilder(
+      future: fetchRutasPorEstado('completada'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.data == null || (snapshot.data as List).isEmpty) {
+          return const Center(child: Text('No hay rutas designadas'));
+        }
+
+        final rutas = snapshot.data as List;
+
+        return Padding(
+          padding: EdgeInsets.all(isDesktop ? 32 : 16),
+          child: ListView.builder(
+            itemCount: rutas.length,
+            itemBuilder: (context, index) {
+              final ruta = rutas[index];
+              return _buildOrderCard(
+                title: 'Delivery completado — ${ruta['fechaFin']}',
+                address: ruta['vehiculo']['modelo'],
+                info:
+                    'Stop: ${ruta['id']} | ${ruta['distancia']} mins | ${ruta['conductor']['nombre']}',
+              );
+            },
+          ),
         );
       },
     );
+  }
+
+  Future<List> fetchRutasPorEstado(String estado) async {
+    final GraphQLClient client = GraphQLProvider.of(context).value;
+    final String query = '''
+      query {
+        rutasPorEstado(estado: "$estado") {
+          id
+          distancia
+          prioridad
+          estado
+          fechaInicio
+          fechaFin
+          conductor {
+            id
+            nombre
+          }
+          vehiculo {
+            id
+            modelo
+          }
+        }
+      }
+    ''';
+
+    final result = await client.query(
+      QueryOptions(
+        document: gql(query),
+        variables: {},
+      ),
+    );
+
+    if (result.hasException) {
+      throw Exception('Error al obtener rutas: ${result.exception}');
+    }
+
+    return result.data?['rutasPorEstado'] ?? [];
   }
 
   Widget _buildOrderCard({
@@ -166,7 +245,6 @@ class _RutasAsignadasState extends State<RutasAsignadas> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fila que contiene el título y el icono de detalles.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
