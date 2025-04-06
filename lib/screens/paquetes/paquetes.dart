@@ -13,7 +13,6 @@ class PaquetesAsignados extends StatefulWidget {
 class _PaquetesAsignadosState extends State<PaquetesAsignados>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool onDuty = true;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
@@ -89,42 +88,17 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
             style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Text(
-                      'Disponible',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                    const SizedBox(width: 8),
-                    Switch(
-                      activeColor: Colors.white,
-                      activeTrackColor: Colors.lightBlueAccent,
-                      value: onDuty,
-                      onChanged: (value) {
-                        setState(() {
-                          onDuty = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorColor: Colors.white,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey,
-                  tabs: const [
-                    Tab(text: 'Por Hacer'),
-                    Tab(text: 'Completado'),
-                  ],
-                ),
-              ),
-            ],
+          Center(
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.grey,
+              tabs: const [
+                Tab(text: 'Pendientes'),
+                Tab(text: 'Completado'),
+              ],
+            ),
           ),
         ],
       ),

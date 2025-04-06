@@ -88,23 +88,21 @@ class _GraphQLProviderState extends State<GraphQLProvider> {
   @override
   void initState() {
     super.initState();
-    _client = ValueNotifier<GraphQLClient>(
-      GraphQLClient(
-        cache: GraphQLCache(),
-        link: HttpLink(
-          'https://adsoftsito-api.onrender.com/graphql/',
-          defaultHeaders: {
-            'Authorization':
-                'JWT ${getToken()}', // Aquí puedes obtener el token al inicio
-          },
-        ),
-      ),
-    );
+    _initializeClient();
   }
 
-  void refreshClient() async {
+  Future<void> _initializeClient() async {
+    final client = await getClient();
+    setState(() {
+      _client = client;
+    });
+  }
+
+  Future<void> refreshClient() async {
     final newClient = await getClient();
-    _client.value = newClient.value;
+    setState(() {
+      _client.value = newClient.value;
+    });
   }
 
   @override
@@ -116,9 +114,14 @@ class _GraphQLProviderState extends State<GraphQLProvider> {
   }
 }
 
-// Método para actualizar el cliente desde otra pantalla
-void updateGraphQLClient(BuildContext context) {
+void updateGraphQLClient(BuildContext context) async {
   final _GraphQLProviderState? state =
       context.findAncestorStateOfType<_GraphQLProviderState>();
-  state?.refreshClient();
+
+  if (state != null) {
+    await state.refreshClient();
+    print("Cliente GraphQL actualizado correctamente.");
+  } else {
+    print("Error: No se pudo encontrar GraphQLProvider.");
+  }
 }

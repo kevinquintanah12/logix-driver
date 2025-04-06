@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:intl/intl.dart';
 
 class RutasAsignadas extends StatefulWidget {
   const RutasAsignadas({Key? key}) : super(key: key);
@@ -11,7 +12,6 @@ class RutasAsignadas extends StatefulWidget {
 class _RutasAsignadasState extends State<RutasAsignadas>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool onDuty = true;
 
   @override
   void initState() {
@@ -49,44 +49,15 @@ class _RutasAsignadasState extends State<RutasAsignadas>
                   horizontal: isDesktop ? 32 : 16,
                   vertical: 8,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Text(
-                            'Disponible',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: isDesktop ? 18 : 16,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Switch(
-                            activeColor: Colors.white,
-                            activeTrackColor: Colors.lightBlueAccent,
-                            value: onDuty,
-                            onChanged: (value) {
-                              setState(() {
-                                onDuty = value;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: TabBar(
-                        controller: _tabController,
-                        indicatorColor: tabSelectedColor,
-                        labelColor: tabSelectedColor,
-                        unselectedLabelColor: tabUnselectedColor,
-                        tabs: const [
-                          Tab(text: 'Por Hacer'),
-                          Tab(text: 'Completado'),
-                        ],
-                      ),
-                    ),
+                alignment: Alignment.center,
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: tabSelectedColor,
+                  labelColor: tabSelectedColor,
+                  unselectedLabelColor: tabUnselectedColor,
+                  tabs: const [
+                    Tab(text: 'Por Hacer'),
+                    Tab(text: 'Completado'),
                   ],
                 ),
               ),
@@ -103,27 +74,13 @@ class _RutasAsignadasState extends State<RutasAsignadas>
           );
         },
       ),
-      floatingActionButton: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/rutasMap');
-            },
-            backgroundColor: primaryBlue,
-            child: const Icon(Icons.map, color: Colors.white),
-          ),
-
-          const SizedBox(width: 10),
-
-          FloatingActionButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/rutasDetallada');
-            },
-            backgroundColor: Colors.red, 
-            child: const Icon(Icons.map, color: Colors.white), 
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'btnRutasMap',
+        onPressed: () {
+          Navigator.pushNamed(context, '/rutasMap');
+        },
+        backgroundColor: primaryBlue,
+        child: const Icon(Icons.map, color: Colors.white),
       ),
     );
   }
@@ -141,6 +98,8 @@ class _RutasAsignadasState extends State<RutasAsignadas>
         }
 
         final rutas = snapshot.data as List;
+        // Definir el formato deseado: 'dd/MM/yyyy'
+        final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
 
         return Padding(
           padding: EdgeInsets.all(isDesktop ? 32 : 16),
@@ -148,11 +107,15 @@ class _RutasAsignadasState extends State<RutasAsignadas>
             itemCount: rutas.length,
             itemBuilder: (context, index) {
               final ruta = rutas[index];
+              // Convertir y formatear la fecha de inicio
+              final fechaInicio = DateTime.parse(ruta['fechaInicio']);
+              final fechaFormateada = dateFormat.format(fechaInicio);
+
               return _buildOrderCard(
-                title: 'Delivery — ${ruta['fechaInicio']}',
+                title: 'Entrega — $fechaFormateada',
                 address: ruta['vehiculo']['modelo'],
                 info:
-                    'Stop: ${ruta['id']} | ${ruta['distancia']} mins | ${ruta['conductor']['nombre']}',
+                    'Ruta: ${ruta['id']} | ${ruta['distancia']} km | ${ruta['conductor']['nombre']}',
               );
             },
           ),
@@ -163,7 +126,7 @@ class _RutasAsignadasState extends State<RutasAsignadas>
 
   Widget _buildCompletedList(bool isDesktop) {
     return FutureBuilder(
-      future: fetchRutasPorEstado('completada'),
+      future: fetchRutasPorEstado('completado'),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -174,6 +137,7 @@ class _RutasAsignadasState extends State<RutasAsignadas>
         }
 
         final rutas = snapshot.data as List;
+        final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
 
         return Padding(
           padding: EdgeInsets.all(isDesktop ? 32 : 16),
@@ -181,11 +145,15 @@ class _RutasAsignadasState extends State<RutasAsignadas>
             itemCount: rutas.length,
             itemBuilder: (context, index) {
               final ruta = rutas[index];
+              // Convertir y formatear la fecha de finalización
+              final fechaFin = DateTime.parse(ruta['fechaFin']);
+              final fechaFormateada = dateFormat.format(fechaFin);
+
               return _buildOrderCard(
-                title: 'Delivery completado — ${ruta['fechaFin']}',
+                title: 'Delivery completado — $fechaFormateada',
                 address: ruta['vehiculo']['modelo'],
                 info:
-                    'Stop: ${ruta['id']} | ${ruta['distancia']} mins | ${ruta['conductor']['nombre']}',
+                    'Stop: ${ruta['id']} | ${ruta['distancia']} km | ${ruta['conductor']['nombre']}',
               );
             },
           ),

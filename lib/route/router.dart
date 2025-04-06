@@ -97,7 +97,7 @@ Route<dynamic> generateRoute(RouteSettings settings) {
 
      case rutasDetallada:
       return MaterialPageRoute(
-        builder: (context) => const RutaDetallada(),
+        builder: (context) => const RutaDetalleScreen(),
       );
 
     case pinScreenRoute:
