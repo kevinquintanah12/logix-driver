@@ -22,8 +22,10 @@ dependencies:
   url_launcher: ^6.3.0
   shared_preferences: ^2.0.9  # Usa la última versión disponible
   google_maps_flutter: ^2.0.6
-  flutter_map: ^3.0.0
-  latlong2: ^0.8.1
+  flutter_map: ^4.0.0
+  latlong2: ^0.8.2
+
+  mapbox_maps_flutter: ^2.7.0 #MAPBOX
   http: ^0.13.5
   fluttertoast: ^8.0.9
   persistent_bottom_nav_bar_v2: ^5.3.1
@@ -38,7 +40,6 @@ dependencies:
   camera_windows: ^0.2.0
   zxing2: ^0.2.0 # Biblioteca para leer códigos QR y de barras
   image: ^4.0.17 # Para procesar imágenes
-
   # Asegúrate de tener la última versión disponible
 
 
@@ -72,6 +73,7 @@ flutter:
     - assets/flags/
     - assets/logo/
     - assets/screens/
+    - assets/ruta.geojson
 
   fonts:
     - family: Plus Jakarta

@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shop/constants.dart';
 import 'package:shop/route/route_constants.dart';
 
 class DashboardPage extends StatelessWidget {

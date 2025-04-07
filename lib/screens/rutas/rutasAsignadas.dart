@@ -103,12 +103,27 @@ class _RutasAsignadasState extends State<RutasAsignadas>
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/rutasMap');
-        },
-        backgroundColor: primaryBlue,
-        child: const Icon(Icons.map, color: Colors.white),
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rutasMap');
+            },
+            backgroundColor: primaryBlue,
+            child: const Icon(Icons.map, color: Colors.white),
+          ),
+
+          const SizedBox(width: 10),
+
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rutasDetallada');
+            },
+            backgroundColor: Colors.red, 
+            child: const Icon(Icons.map, color: Colors.white), 
+          ),
+        ],
       ),
     );
   }

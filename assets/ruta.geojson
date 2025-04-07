@@ -1,0 +1,20 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-99.145555, 19.419444],
+            [-99.150000, 19.425000],
+            [-99.155000, 19.430000],
+            [-99.160000, 19.435000]
+          ]
+        },
+        "properties": {
+          "name": "Ruta de ejemplo"
+        }
+      }
+    ]
+  }

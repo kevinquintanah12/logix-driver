@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:shop/query/paquetes_query.dart';  // Asegúrate de que las consultas estén bien definidas
 
 class PaquetesAsignados extends StatefulWidget {
   const PaquetesAsignados({Key? key}) : super(key: key);
@@ -11,6 +14,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool onDuty = true;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -24,11 +28,14 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
     super.dispose();
   }
 
+  // Método para obtener el token JWT almacenado
+  Future<String?> _getAuthToken() async {
+    return await _storage.read(key: 'auth_token');
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color primaryBlue = Color(0xFF0B3C5D);
-    const Color tabUnselectedColor = Colors.grey;
-    const Color tabSelectedColor = Colors.white;
 
     return Scaffold(
       appBar: AppBar(
@@ -42,78 +49,14 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
           bool isDesktop = constraints.maxWidth > 800;
           return Column(
             children: [
-              Container(
-                color: primaryBlue,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isDesktop ? 32 : 16,
-                  vertical: 8,
-                ),
-                child: Column(
-                  children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Buscar paquete...',
-                        prefixIcon: Icon(Icons.search, color: Colors.white),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.2),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        hintStyle: TextStyle(color: Colors.white),
-                      ),
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Text(
-                                'Disponible',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isDesktop ? 18 : 16,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Switch(
-                                activeColor: Colors.white,
-                                activeTrackColor: Colors.lightBlueAccent,
-                                value: onDuty,
-                                onChanged: (value) {
-                                  setState(() {
-                                    onDuty = value;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: TabBar(
-                            controller: _tabController,
-                            indicatorColor: tabSelectedColor,
-                            labelColor: tabSelectedColor,
-                            unselectedLabelColor: tabUnselectedColor,
-                            tabs: const [
-                              Tab(text: 'Por Hacer'),
-                              Tab(text: 'Completado'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              _buildTopSection(isDesktop),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildToDoList(isDesktop),
-                    _buildCompletedList(isDesktop),
+                    // Aquí usas las consultas para los paquetes 'por entregar' y 'entregados'
+                    _buildPackageList(queryPorEntregar, isDesktop),  // Consulta por entregar
+                    _buildPackageList(queryEntregadas, isDesktop),  // Consulta entregadas
                   ],
                 ),
               ),
@@ -124,47 +67,128 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
     );
   }
 
-  Widget _buildToDoList(bool isDesktop) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(isDesktop ? 32 : 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'PRÓXIMO PAQUETE',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+  Widget _buildTopSection(bool isDesktop) {
+    const Color primaryBlue = Color(0xFF0B3C5D);
+    return Container(
+      color: primaryBlue,
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16, vertical: 8),
+      child: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Buscar paquete...',
+              prefixIcon: const Icon(Icons.search, color: Colors.white),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.2),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
               ),
+              hintStyle: const TextStyle(color: Colors.white),
             ),
-            const SizedBox(height: 8),
-            _buildPackageCard(
-              title: 'Paquete — 11:03 AM',
-              address: 'Calle Principal, 525, Ciudad',
-              info: 'ID: 109 | 120 mins | PKG9392',
-            ),
-          ],
-        ),
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const Text(
+                      'Disponible',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    Switch(
+                      activeColor: Colors.white,
+                      activeTrackColor: Colors.lightBlueAccent,
+                      value: onDuty,
+                      onChanged: (value) {
+                        setState(() {
+                          onDuty = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey,
+                  tabs: const [
+                    Tab(text: 'Por Hacer'),
+                    Tab(text: 'Completado'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCompletedList(bool isDesktop) {
-    return ListView.builder(
-      padding: EdgeInsets.all(isDesktop ? 32 : 16),
-      itemCount: 3,
-      itemBuilder: (context, index) {
-        return _buildPackageCard(
-          title: 'Paquete entregado — ${index + 1}',
-          address: 'Dirección X, Ciudad',
-          info: 'ID: ${index + 100} | 90 mins | PKG900${index + 1}',
+  // Método para construir la lista de paquetes con las consultas GraphQL
+  Widget _buildPackageList(String query, bool isDesktop) {
+    return FutureBuilder<String?>(
+      future: _getAuthToken(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final String? token = snapshot.data;
+        if (token == null) {
+          return const Center(child: Text("⚠️ Error: No se encontró el token de autenticación."));
+        }
+
+        return Query(
+          options: QueryOptions(
+            document: gql(query),
+            context: Context().withEntry(
+              HttpLinkHeaders(
+                headers: {"Authorization": "Bearer $token"},
+              ),
+            ),
+          ),
+          builder: (result, {fetchMore, refetch}) {
+            if (result.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (result.hasException) {
+              return Center(child: Text("Error: ${result.exception.toString()}"));
+            }
+
+            final List entregas = result.data?['entregasPorEstado'] ?? [];
+
+            if (entregas.isEmpty) {
+              return const Center(child: Text("No hay paquetes disponibles."));
+            }
+
+            return ListView.builder(
+              padding: EdgeInsets.all(isDesktop ? 32 : 16),
+              itemCount: entregas.length,
+              itemBuilder: (context, index) {
+                final entrega = entregas[index];
+                final paquete = entrega['paquete'] ?? {};
+                final destinatario = entrega['destinatario'] ?? {};
+
+                return _buildPackageCard(
+                  title: '${paquete['producto']['id'] ?? 'Sin ID'} — ${entrega['fechaEntrega'] ?? 'Fecha desconocida'}',
+                  address: '${destinatario['latitud'] ?? 'Latitud desconocida'}, ${destinatario['longitud'] ?? 'Longitud desconocida'}',
+                  info: 'ID: ${entrega['id'] ?? 'Desconocido'} | Estado: ${entrega['estado'] ?? 'Sin estado'}',
+                );
+              },
+            );
+          },
         );
       },
     );
   }
 
+  // Método para construir las tarjetas de los paquetes
   Widget _buildPackageCard({
     required String title,
     required String address,
@@ -185,10 +209,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 IconButton(
@@ -200,26 +221,18 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
             const SizedBox(height: 4),
             Text(
               address,
-              style: const TextStyle(
-                color: Colors.black54,
-                fontSize: 14,
-              ),
+              style: const TextStyle(color: Colors.black54, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
               info,
-              style: const TextStyle(
-                color: Colors.black54,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.black54, fontSize: 12),
             ),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0B3C5D),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0B3C5D)),
                 onPressed: () {
                   Navigator.pushNamed(context, '/entregarPaquete');
                 },
