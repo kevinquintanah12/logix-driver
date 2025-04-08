@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class EntregarPaquete extends StatefulWidget {
-  const EntregarPaquete({Key? key}) : super(key: key);
+  const EntregarPaquete({super.key});
 
   @override
   State<EntregarPaquete> createState() => _EntregarPaqueteState();

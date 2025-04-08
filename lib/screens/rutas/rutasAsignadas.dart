@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 class RutasAsignadas extends StatefulWidget {
-  const RutasAsignadas({Key? key}) : super(key: key);
+  const RutasAsignadas({super.key});
 
   @override
   State<RutasAsignadas> createState() => _RutasAsignadasState();
@@ -220,7 +220,7 @@ class _RutasAsignadasState extends State<RutasAsignadas>
     final result = await client.query(
       QueryOptions(
         document: gql(query),
-        variables: {},
+        variables: const {},
       ),
     );
 

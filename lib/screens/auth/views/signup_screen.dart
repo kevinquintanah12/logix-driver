@@ -58,9 +58,9 @@ mutation CreateUser(\$email : String!,  \$password : String!, \$username : Strin
             children: [
               SizedBox(
                 height: size.height * 0.35,
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.person_add_alt_1_outlined,
                       size: 90,
@@ -86,6 +86,7 @@ mutation CreateUser(\$email : String!,  \$password : String!, \$username : Strin
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
+                      // ignore: deprecated_member_use
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 5),

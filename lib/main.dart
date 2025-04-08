@@ -5,6 +5,100 @@ import 'package:shop/route/route_constants.dart';
 import 'package:shop/route/router.dart' as router;
 import 'package:shop/theme/app_theme.dart';
 
+Future<ValueNotifier<GraphQLClient>> getClient() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+
+  print("🛠️ Token en getClient(): $token");
+
+  final HttpLink httpLink = HttpLink(
+    "https://logix-ioz0.onrender.com/graphql/",
+    defaultHeaders: {
+      'Authorization': token != null ? 'JWT $token' : '',
+    },
+  );
+
+  final client = ValueNotifier<GraphQLClient>(
+    GraphQLClient(
+      cache: GraphQLCache(),
+      link: httpLink,
+    ),
+  );
+
+  return client;
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Necesario si usas SharedPreferences antes de runApp
+  runApp(const MyApp());
+}
+
+// Widget principal
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const GraphQLWrapper(); // Usas tu widget personalizado aquí
+  }
+}
+
+class GraphQLWrapper extends StatefulWidget {
+  const GraphQLWrapper({super.key});
+
+  @override
+  State<GraphQLWrapper> createState() => _GraphQLProviderState();
+}
+
+class _GraphQLProviderState extends State<GraphQLWrapper> {
+  ValueNotifier<GraphQLClient>? _client;
+
+  @override
+  void initState() {
+    super.initState();
+    getClient().then((client) {
+      setState(() {
+        _client = client;
+      });
+    });
+  }
+
+  void refreshClient() async {
+    final newClient = await getClient();
+    setState(() {
+      _client = newClient;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_client == null) {
+      return const MaterialApp(home: Center(child: CircularProgressIndicator()));
+    }
+
+    return GraphQLProvider(
+      client: _client!,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Truck GPS',
+        theme: AppTheme.lightTheme(context),
+        themeMode: ThemeMode.dark,
+        onGenerateRoute: router.generateRoute,
+        initialRoute: RouteConstants.splashScreenRoute,
+      ),
+    );
+  }
+}
+
+// Llamar a esto desde cualquier parte para actualizar el token
+void updateGraphQLClient(BuildContext context) {
+  final _GraphQLProviderState? state =
+      context.findAncestorStateOfType<_GraphQLProviderState>();
+  state?.refreshClient();
+}
+
+
+/*
 // Función para obtener el token JWT
 Future<String?> getToken() async {
   final prefs = await SharedPreferences.getInstance();
@@ -40,10 +134,6 @@ void main() {
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  // Eliminar const en el GlobalKey
-  final GlobalKey<_GraphQLProviderState> _clientKey =
-      GlobalKey<_GraphQLProviderState>();
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<ValueNotifier<GraphQLClient>>(
@@ -65,7 +155,6 @@ class MyApp extends StatelessWidget {
         final client = snapshot.data;
 
         return GraphQLProvider(
-          key: _clientKey, // Asignamos la clave global
           client: client!,
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
@@ -121,4 +210,4 @@ void updateGraphQLClient(BuildContext context) {
   final _GraphQLProviderState? state =
       context.findAncestorStateOfType<_GraphQLProviderState>();
   state?.refreshClient();
-}
+}*/

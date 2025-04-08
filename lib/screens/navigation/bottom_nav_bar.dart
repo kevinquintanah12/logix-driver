@@ -5,9 +5,10 @@ class BottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  const BottomNavBar({Key? key, required this.currentIndex, required this.onTap}) : super(key: key);
+  const BottomNavBar({super.key, required this.currentIndex, required this.onTap});
 
   @override
+  // ignore: library_private_types_in_public_api
   _BottomNavBarState createState() => _BottomNavBarState();
 }
 
@@ -22,10 +23,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
         activeColor: Colors.blueAccent, // Color activo
         color: Colors.grey, // Color inactivo
         iconSize: 24, // Tamaño de los iconos
+        // ignore: deprecated_member_use
         tabBackgroundColor: Colors.blueAccent.withOpacity(0.2), // Fondo activo
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Padding interno de los tabs
         duration: const Duration(milliseconds: 400), // Animación
-        tabs: [
+        tabs: const [
           GButton(
             icon: Icons.home,
             text: 'Inicio',
