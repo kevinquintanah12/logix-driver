@@ -4,7 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shop/route/route_constants.dart';
 
 class PinScreen extends StatefulWidget {
-  const PinScreen({Key? key}) : super(key: key);
+  const PinScreen({super.key});
 
   @override
   State<PinScreen> createState() => _PinScreenState();
@@ -66,6 +66,7 @@ class _PinScreenState extends State<PinScreen> {
                   // Guarda localmente el PIN luego de una respuesta exitosa.
                   await _storage.write(
                       key: 'user_pin', value: pinController.text);
+                  // ignore: use_build_context_synchronously
                   Navigator.pushNamed(context, entryPointScreenRoute);
                 },
                 onError: (error) {

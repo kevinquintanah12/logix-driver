@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:shop/main.dart';
 import 'package:shop/route/route_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,7 +30,6 @@ query {
   }
 }
 """;
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -70,7 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result.hasException) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al obtener datos del chofer: ${result.exception.toString()}')),
+        SnackBar(
+            content: Text(
+                'Error al obtener datos del chofer: ${result.exception.toString()}')),
       );
       return;
     }
@@ -159,9 +161,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: usernameController,
                           decoration: const InputDecoration(
                             labelText: "Correo electrónico",
-                            prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
+                            prefixIcon:
+                                Icon(Icons.email_outlined, color: Colors.grey),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(30)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(30)),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -178,9 +182,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: "Contraseña",
-                            prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey),
+                            prefixIcon:
+                                Icon(Icons.lock_outlined, color: Colors.grey),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(30)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(30)),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -213,7 +219,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             document: gql(loginPostMutation),
                             onCompleted: (dynamic resultData) async {
                               setState(() {
-                                isLoading = false; // Detener el indicador de carga
+                                isLoading =
+                                    false; // Detener el indicador de carga
                               });
 
                               if (resultData != null &&
@@ -225,22 +232,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                     content: Text("Login exitoso."),
                                   ),
                                 );
-                                // Guardar el token en SharedPreferences
                                 await saveToken(token);
-                                print('Token: $token');
-                                // Verificar si el chofer ya tiene PIN configurado
+                                print("✅ Token guardado: $token");
+
+// Actualiza el cliente global
+                                updateGraphQLClient(context);
+
+// Espera un momento para que se refresque
+                                await Future.delayed(
+                                    const Duration(milliseconds: 100));
+
+// Ahora realiza la consulta usando el cliente global actualizado:
                                 checkChoferPinStatus();
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("Error: respuesta inválida del servidor"),
+                                    content: Text(
+                                        "Error: respuesta inválida del servidor"),
                                   ),
                                 );
                               }
                             },
                             onError: (error) {
                               setState(() {
-                                isLoading = false; // Detener el indicador de carga en caso de error
+                                isLoading =
+                                    false; // Detener el indicador de carga en caso de error
                               });
 
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -252,13 +268,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
                             },
                           ),
-                          builder: (RunMutation runMutation, QueryResult? result) {
+                          builder:
+                              (RunMutation runMutation, QueryResult? result) {
                             return SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF8353D4),
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
@@ -266,7 +284,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
                                     setState(() {
-                                      isLoading = true; // Mostrar el indicador de carga
+                                      isLoading =
+                                          true; // Mostrar el indicador de carga
                                     });
 
                                     runMutation({

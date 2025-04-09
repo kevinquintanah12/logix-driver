@@ -4,7 +4,7 @@ import 'package:shop/route/route_constants.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 class ConfiguracionPage extends StatefulWidget {
-  const ConfiguracionPage({Key? key}) : super(key: key);
+  const ConfiguracionPage({super.key});
 
   @override
   State<ConfiguracionPage> createState() => _ConfiguracionPageState();
@@ -23,6 +23,7 @@ class _ConfiguracionPageState extends State<ConfiguracionPage> {
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    // ignore: use_build_context_synchronously
     Navigator.pushReplacementNamed(context, logInScreenRoute);
   }
 

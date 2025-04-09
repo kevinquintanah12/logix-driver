@@ -4,7 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shop/query/paquetes_query.dart';  // Asegúrate de que las consultas estén bien definidas
 
 class PaquetesAsignados extends StatefulWidget {
-  const PaquetesAsignados({Key? key}) : super(key: key);
+  const PaquetesAsignados({super.key});
 
   @override
   State<PaquetesAsignados> createState() => _PaquetesAsignadosState();
@@ -147,7 +147,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
         return Query(
           options: QueryOptions(
             document: gql(query),
-            context: Context().withEntry(
+            context: const Context().withEntry(
               HttpLinkHeaders(
                 headers: {"Authorization": "Bearer $token"},
               ),

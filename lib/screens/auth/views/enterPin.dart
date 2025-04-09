@@ -6,14 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shop/route/route_constants.dart';
 
 class EnterPinScreen extends StatefulWidget {
-  const EnterPinScreen({Key? key}) : super(key: key);
+  const EnterPinScreen({super.key});
 
   @override
   State<EnterPinScreen> createState() => _EnterPinScreenState();
 }
 
 class _EnterPinScreenState extends State<EnterPinScreen> {
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
   final TextEditingController _pinController = TextEditingController();
 
   // Definir la consulta GraphQL para verificar el PIN
