@@ -16,14 +16,23 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   final TextEditingController _pinController = TextEditingController();
 
-  // Definir la consulta GraphQL para verificar el PIN
+  // Consulta para verificar el PIN
   final String checkPinQuery = """
     query CheckPin(\$pin: String!) {
       checkPin(pin: \$pin)
     }
   """;
 
-  /// Método para verificar si ya existe un token y guardarlo en `FlutterSecureStorage`
+  // Mutación para guardar el token FCM
+  final String guardarTokenMutation = """
+    mutation GuardarTokenFCM(\$token: String!) {
+      guardarTokenFcm(token: \$token) {
+        ok
+      }
+    }
+  """;
+
+  /// Verifica si existe un token guardado y lo almacena en FlutterSecureStorage
   Future<void> _checkForToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -52,6 +61,7 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
 
     final client = GraphQLProvider.of(context).value;
 
+    // Ejecutar consulta para verificar el PIN
     final QueryOptions options = QueryOptions(
       document: gql(checkPinQuery),
       variables: {"pin": enteredPin},
@@ -68,12 +78,30 @@ class _EnterPinScreenState extends State<EnterPinScreen> {
     }
 
     print("✅ Respuesta del servidor: ${result.data}");
-
     final bool? isValid = result.data?['checkPin'];
     print("🔍 ¿Es válido el PIN? $isValid");
 
     if (isValid == true) {
-      print("✅ PIN correcto. Redirigiendo...");
+      print("✅ PIN correcto.");
+
+      // Ejecutar la mutación para guardar el token FCM
+      final MutationOptions mutationOptions = MutationOptions(
+        document: gql(guardarTokenMutation),
+        variables: {'token': "mi_token_fcm_de_ejemplo"},
+      );
+      final mutationResult = await client.mutate(mutationOptions);
+
+      if (mutationResult.hasException) {
+        print("❌ Error en la mutación guardarTokenFcm: ${mutationResult.exception.toString()}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar token FCM: ${mutationResult.exception.toString()}')),
+        );
+        return;
+      } else {
+        print("✅ Token FCM guardado: ${mutationResult.data}");
+      }
+
+      // Guardar el PIN en FlutterSecureStorage y redirigir
       await _storage.write(key: 'user_pin', value: enteredPin);
       Navigator.pushNamed(context, entryPointScreenRoute);
     } else {

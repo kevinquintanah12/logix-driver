@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "462154546729",
+    "project_id": "app-driver-d1bfb",
+    "storage_bucket": "app-driver-d1bfb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462154546729:android:8d8dd7941a77e6ebfa2638",
+        "android_client_info": {
+          "package_name": "com.example.shop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB48tb0KGN8rHRJx8UBoGWu_QP51hspR0I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

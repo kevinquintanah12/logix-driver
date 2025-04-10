@@ -41,6 +41,14 @@ dependencies:
   zxing2: ^0.2.0 # Biblioteca para leer códigos QR y de barras
   image: ^4.0.17 # Para procesar imágenes
   mqtt_client: ^9.6.1
+  flutter_tts: ^3.5.0
+  firebase_core: ^2.27.0
+  graphql_flutter: ^5.0.1
+  firebase_messaging: ^14.7.2
+
+  
+  
+
 # Asegúrate de tener la última versión disponible
 
 
@@ -63,6 +71,7 @@ dev_dependencies:
   shared_preferences: ^2.2.0
 
   flutter_lints: ^4.0.0
+  syncfusion_flutter_gauges: ^20.2.46 
 
 flutter:
   uses-material-design: true

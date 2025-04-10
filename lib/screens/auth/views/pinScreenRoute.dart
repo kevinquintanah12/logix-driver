@@ -14,7 +14,7 @@ class _PinScreenState extends State<PinScreen> {
   final TextEditingController pinController = TextEditingController();
   final FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  // Definir la mutación para guardar el PIN
+  // Mutación para guardar el PIN
   final String savePinMutation = """
     mutation SetChoferPin(\$pin: String!) {
       setChoferPin(pin: \$pin) {
@@ -22,6 +22,15 @@ class _PinScreenState extends State<PinScreen> {
           id
           nombre
         }
+      }
+    }
+  """;
+
+  // Mutación para guardar el token FCM
+  final String guardarTokenMutation = """
+    mutation GuardarTokenFCM(\$token: String!) {
+      guardarTokenFcm(token: \$token) {
+        ok
       }
     }
   """;
@@ -63,9 +72,30 @@ class _PinScreenState extends State<PinScreen> {
                 document: gql(savePinMutation),
                 // Se ejecuta cuando la mutación finaliza exitosamente.
                 onCompleted: (dynamic resultData) async {
+                  // Se obtiene el cliente GraphQL para llamar a la siguiente mutación.
+                  final client = GraphQLProvider.of(context).value;
+
+                  // Ejecutar la mutación para guardar el token FCM.
+                  final MutationOptions fcmOptions = MutationOptions(
+                    document: gql(guardarTokenMutation),
+                    variables: {'token': "mi_token_fcm_de_ejemplo"},
+                  );
+                  final fcmResult = await client.mutate(fcmOptions);
+
+                  if (fcmResult.hasException) {
+                    print("❌ Error en la mutación de guardarTokenFcm: ${fcmResult.exception.toString()}");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Error al guardar token FCM: ${fcmResult.exception.toString()}"),
+                      ),
+                    );
+                    return;
+                  } else {
+                    print("✅ Token FCM guardado: ${fcmResult.data}");
+                  }
+
                   // Guarda localmente el PIN luego de una respuesta exitosa.
-                  await _storage.write(
-                      key: 'user_pin', value: pinController.text);
+                  await _storage.write(key: 'user_pin', value: pinController.text);
                   Navigator.pushNamed(context, entryPointScreenRoute);
                 },
                 onError: (error) {

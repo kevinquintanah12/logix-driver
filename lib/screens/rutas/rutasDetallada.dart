@@ -7,6 +7,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class RutaDetalleScreen extends StatefulWidget {
   const RutaDetalleScreen({Key? key}) : super(key: key);
@@ -17,18 +18,33 @@ class RutaDetalleScreen extends StatefulWidget {
 
 class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
   late MapController mapController;
-  LatLng? origen;           // Coordenada de inicio (origenCd)
-  LatLng? destino;          // Coordenada de destino
-  LatLng? vehiclePosition;  // Posición actual del carro (se actualiza vía MQTT)
+  LatLng? origen;
+  LatLng? destino;
+  LatLng? vehiclePosition;
+
   double tempMin = 0, tempMax = 50;
   double humMin = 0, humMax = 100;
+
+  // Variables de sensores
+  double currentTemperature = 25;
+  double currentHumidity = 50;
+
+  String alertMessage = "";
   List<LatLng> routeCoordinates = [];
   bool _isDataFetched = false;
   final String _mapboxToken =
       'pk.eyJ1IjoiZGF5a2V2MTIiLCJhIjoiY204MTd5NzR3MGdxYTJqcGlsa29odnQ5YiJ9.tbAEt453VxfJoDatpU72YQ';
 
-  // MQTT Client
   late MqttServerClient mqttClient;
+
+  double _sensorPanelTop = 100;
+  double _sensorPanelLeft = 16;
+
+  // Variable para controlar el estado del botón de cancelar/reiniciar viaje
+  bool _isCancelled = false;
+
+  // Instancia de FlutterTts
+  final FlutterTts flutterTts = FlutterTts();
 
   @override
   void initState() {
@@ -47,7 +63,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
   }
 
   Future<void> _connectToMqtt() async {
-    mqttClient = MqttServerClient('localhost', '');
+    mqttClient = MqttServerClient('10.40.6.176', '');
     mqttClient.port = 1883;
     mqttClient.logging(on: true);
     mqttClient.keepAlivePeriod = 20;
@@ -56,7 +72,8 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     mqttClient.onSubscribed = _onMqttSubscribed;
 
     final connMess = MqttConnectMessage()
-        .withClientIdentifier('flutter_client_${DateTime.now().millisecondsSinceEpoch}')
+        .withClientIdentifier(
+            'flutter_client_${DateTime.now().millisecondsSinceEpoch}')
         .startClean()
         .withWillQos(MqttQos.atLeastOnce);
     mqttClient.connectionMessage = connMess;
@@ -67,19 +84,18 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       debugPrint('Error al conectar al broker: $e');
       mqttClient.disconnect();
     }
-
-    // Escuchar mensajes entrantes
     mqttClient.updates!.listen(_onMqttMessage);
   }
 
   void _onMqttConnected() {
     debugPrint('Conectado al broker MQTT');
-    // Suscribirse a los tópicos deseados
     mqttClient.subscribe('logix/gps', MqttQos.atLeastOnce);
     mqttClient.subscribe('logix/alerts', MqttQos.atLeastOnce);
     mqttClient.subscribe('logix/temperature', MqttQos.atLeastOnce);
     mqttClient.subscribe('logix/humidity', MqttQos.atLeastOnce);
     mqttClient.subscribe('logix/gps/command', MqttQos.atLeastOnce);
+
+    _publishMqttMessage('logix/controliot', json.encode({"command": "on"}));
   }
 
   void _onMqttDisconnected() {
@@ -90,34 +106,97 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     debugPrint('Suscrito al tópico: $topic');
   }
 
-  // Callback para mensajes entrantes
   void _onMqttMessage(List<MqttReceivedMessage<MqttMessage>> event) {
     final recMess = event[0].payload as MqttPublishMessage;
-    final message = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-    debugPrint('Mensaje recibido en ${event[0].topic}: $message');
+    final message =
+        MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+    final topic = event[0].topic;
+    debugPrint('Mensaje recibido en $topic: $message');
 
-    if (event[0].topic == 'logix/gps/command') {
+    if (topic == 'logix/gps/command') {
       _handleGpsCommand(message);
-    } else if (event[0].topic == 'logix/gps') {
+    }
+    // Actualización de la posición en "logix/gps"
+    else if (topic == 'logix/gps') {
       try {
         final data = json.decode(message);
         if (data['lat'] != null && data['lon'] != null) {
+          if (!mounted) return;
           setState(() {
             vehiclePosition = LatLng(
               double.parse(data['lat'].toString()),
               double.parse(data['lon'].toString()),
             );
-            // Mover el mapa a la posición actual del vehículo
-            mapController.move(vehiclePosition!, mapController.zoom);
+          });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (vehiclePosition != null && mounted) {
+              mapController.move(vehiclePosition!, mapController.zoom);
+            }
           });
         }
       } catch (e) {
-        debugPrint('Error al parsear el mensaje MQTT: $e');
+        debugPrint('Error al parsear mensaje gps: $e');
+      }
+    }
+    // Actualización de la temperatura
+    else if (topic == 'logix/temperature') {
+      try {
+        final data = json.decode(message);
+        if (data['temperature'] != null) {
+          double newTemp = double.parse(data['temperature'].toString());
+          if (!mounted) return;
+          setState(() {
+            currentTemperature = newTemp;
+          });
+          _speakSensorStatus();
+        }
+      } catch (e) {
+        debugPrint('Error al parsear temperatura: $e');
+      }
+    }
+    // Actualización de la humedad
+    else if (topic == 'logix/humidity') {
+      try {
+        final data = json.decode(message);
+        if (data['humidity'] != null) {
+          double newHum = double.parse(data['humidity'].toString());
+          if (!mounted) return;
+          setState(() {
+            currentHumidity = newHum;
+          });
+          _speakSensorStatus();
+        }
+      } catch (e) {
+        debugPrint('Error al parsear humedad: $e');
+      }
+    }
+    // Recepción y muestra de alertas del IoT Sensor, con lectura TTS
+    else if (topic == 'logix/alerts') {
+      try {
+        final data = json.decode(message);
+        if (data['alert'] != null) {
+          if (!mounted) return;
+          setState(() {
+            alertMessage = data['alert'];
+          });
+          // Se lee la alerta usando TTS
+          _speak(alertMessage);
+        }
+      } catch (e) {
+        debugPrint('Error al parsear alerta: $e');
       }
     }
   }
 
-  // Maneja el comando recibido para actualizar origen y destino
+  // Función para leer la actualización de sensores mediante TTS
+  Future<void> _speakSensorStatus() async {
+    if (!mounted) return;
+    String message =
+        "Temperatura actual: ${currentTemperature.toStringAsFixed(2)} grados, " +
+        "humedad actual: ${currentHumidity.toStringAsFixed(0)} por ciento.";
+    await _speak(message);
+  }
+
   Future<void> _handleGpsCommand(String message) async {
     try {
       final commandData = json.decode(message);
@@ -125,6 +204,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
           commandData['longinicio'] != null &&
           commandData['latdestino'] != null &&
           commandData['longdestino'] != null) {
+        if (!mounted) return;
         setState(() {
           origen = LatLng(
             double.parse(commandData['latinicio'].toString()),
@@ -134,14 +214,11 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
             double.parse(commandData['latdestino'].toString()),
             double.parse(commandData['longdestino'].toString()),
           );
-          // Opcional: También actualizar vehiclePosition si se desea centrar
           vehiclePosition = origen;
         });
 
-        // Actualiza la ruta usando las nuevas coordenadas
         await _fetchRouteFromMapbox();
 
-        // Se obtiene la ciudad usando el origen (puedes ajustarlo)
         String city = "Desconocida";
         if (origen != null) {
           city = await _getCityFromCoordinates(origen!);
@@ -149,15 +226,15 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
         final dataToPublish = {
           'lat': origen?.latitude ?? 0,
           'lon': origen?.longitude ?? 0,
-          'temperature': tempMax, // o tempMin/promedio según tu lógica
-          'humidity': humMax,     // o humMin según tu lógica
+          'temperature': currentTemperature,
+          'humidity': currentHumidity,
           'city': city
         };
         _publishMqttMessage('logix/gps', json.encode(dataToPublish));
         debugPrint('Datos publicados desde comando: $dataToPublish');
       }
     } catch (e) {
-      debugPrint('Error al manejar el comando: $e');
+      debugPrint('Error al manejar comando: $e');
     }
   }
 
@@ -220,23 +297,41 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       final tempData = producto['calculoenvio']['tipoProducto']['temperatura'];
       final humData = producto['calculoenvio']['tipoProducto']['humedad'];
 
+      if (!mounted) return;
       setState(() {
-        // Usamos la ubicación de origenCd como punto inicial del carro
         origen = LatLng(
           double.parse(origenData['latitud'].toString()),
           double.parse(origenData['longitud'].toString()),
         );
-        // También asignamos vehiclePosition al mismo valor para centrar el carro al inicio
         vehiclePosition = origen;
         destino = LatLng(
           double.parse(destinoData['latitud'].toString()),
           double.parse(destinoData['longitud'].toString()),
         );
-        // Valores de temperatura y humedad
         tempMin = double.parse(tempData['rangoMinimo'].toString());
         tempMax = double.parse(tempData['rangoMaximo'].toString());
         humMin = double.parse(humData['rangoMinimo'].toString());
         humMax = double.parse(humData['rangoMaximo'].toString());
+
+        // Inicializamos currentTemperature y currentHumidity
+        currentTemperature = (tempMin + tempMax) / 2;
+        currentHumidity = ((humMin + humMax) / 2).clamp(humMin, humMax);
+      });
+
+      _publishMqttMessage('logix/config', json.encode({
+        "current_temp": currentTemperature,
+        "current_hum": currentHumidity,
+        "temp_min": tempMin,
+        "temp_max": tempMax,
+        "hum_min": humMin,
+        "hum_max": humMax,
+      }));
+
+      const zoomLevel = 15.0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (origen != null && mounted) {
+          mapController.move(origen!, zoomLevel);
+        }
       });
 
       await _fetchRouteFromMapbox();
@@ -255,9 +350,9 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       List<LatLng> points = coordinates
           .map((coord) => LatLng(coord[1], coord[0]))
           .toList();
+      if (!mounted) return;
       setState(() {
         routeCoordinates = points;
-        // vehiclePosition ya fue inicializado en _fetchRutaDetalle, se mantiene
       });
     } else {
       debugPrint('Error al obtener la ruta: ${response.statusCode}');
@@ -283,36 +378,47 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     return "Desconocida";
   }
 
-  Future<void> _simulateVehicleMovement() async {
-    // Simula el movimiento publicando cada iteración vía MQTT
-    for (int i = 0; i < routeCoordinates.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 200));
+  // Función para manejar el botón de cancelar/reiniciar viaje
+  void _toggleTrip() {
+    if (!_isCancelled) {
+      _publishMqttMessage(
+          'logix/controliot', json.encode({"command": "off"}));
+      _publishMqttMessage(
+          'logix/gps/control', json.encode({"command": "off"}));
       setState(() {
-        vehiclePosition = routeCoordinates[i];
-        // Mover el mapa a la nueva posición del vehículo
-        mapController.move(vehiclePosition!, mapController.zoom);
+        _isCancelled = true;
+        // Regresar la posición del vehículo al inicio (origen)
+        vehiclePosition = origen;
       });
-
-      // Se obtiene la ciudad a partir de las coordenadas actuales
-      String city = await _getCityFromCoordinates(vehiclePosition!);
-      final dataToPublish = {
-        'lat': vehiclePosition!.latitude,
-        'lon': vehiclePosition!.longitude,
-        'temperature': tempMax,
-        'humidity': humMax,
-        'city': city
-      };
-      _publishMqttMessage('logix/gps', json.encode(dataToPublish));
-      debugPrint('Datos publicados: $dataToPublish');
+      // Se reposiciona el mapa al origen
+      if (origen != null) {
+        mapController.move(origen!, 15.0);
+      }
+      debugPrint("Viaje cancelado, se regresó al inicio y sensores apagados");
+    } else {
+      _publishMqttMessage(
+          'logix/controliot', json.encode({"command": "on"}));
+      _publishMqttMessage(
+          'logix/gps/control', json.encode({"command": "on"}));
+      setState(() {
+        _isCancelled = false;
+      });
+      debugPrint("Viaje reiniciado y sensores encendidos");
     }
   }
 
-  // Método publicador MQTT
   void _publishMqttMessage(String topic, String message) {
     final builder = MqttClientPayloadBuilder();
     builder.addString(message);
     mqttClient.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
     debugPrint('Publisher envía: $message a $topic');
+  }
+
+  // Función para hablar el mensaje mediante TTS
+  Future<void> _speak(String message) async {
+    await flutterTts.setLanguage("es-ES");
+    await flutterTts.setPitch(1.0);
+    await flutterTts.speak(message);
   }
 
   @override
@@ -326,11 +432,11 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
                 FlutterMap(
                   mapController: mapController,
                   options: MapOptions(
-                    // Usamos vehiclePosition (si existe) para centrar el mapa; de lo contrario, el origen
                     center: vehiclePosition ?? origen,
                     zoom: 14,
                     maxZoom: 18,
-                    interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    interactiveFlags:
+                        InteractiveFlag.all & ~InteractiveFlag.rotate,
                   ),
                   children: [
                     TileLayer(
@@ -356,15 +462,15 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
                           point: origen!,
                           width: 40,
                           height: 40,
-                          builder: (context) => const Icon(
-                              Icons.location_on, color: Colors.green, size: 30),
+                          builder: (context) => const Icon(Icons.location_on,
+                              color: Colors.green, size: 30),
                         ),
                         Marker(
                           point: destino!,
                           width: 40,
                           height: 40,
-                          builder: (context) => const Icon(
-                              Icons.location_on, color: Colors.red, size: 30),
+                          builder: (context) => const Icon(Icons.location_on,
+                              color: Colors.red, size: 30),
                         ),
                         if (vehiclePosition != null)
                           Marker(
@@ -381,16 +487,78 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
                   ],
                 ),
                 Positioned(
-                  right: 16,
-                  top: 100,
-                  child: _buildSensorPanel(),
+                  top: _sensorPanelTop,
+                  left: _sensorPanelLeft,
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
+                      if (!mounted) return;
+                      setState(() {
+                        _sensorPanelTop += details.delta.dy;
+                        _sensorPanelLeft += details.delta.dx;
+                      });
+                    },
+                    child: _buildSensorPanel(),
+                  ),
                 ),
+                if (alertMessage.isNotEmpty)
+                  Positioned(
+                    top: 20,
+                    left: 20,
+                    right: 20,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              alertMessage,
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 16),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () {
+                              setState(() {
+                                alertMessage = "";
+                              });
+                            },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
     );
   }
 
   Widget _buildSensorPanel() {
+    const double circleSize = 30.0;
+    const double fontSize = 18.0;
+
+    // Para la barra de temperatura, se extiende el rango:
+    // 1 grado menos que el límite inferior y 2 grados más que el límite superior.
+    final double extendedTempMin = tempMin - 1.0;
+    final double extendedTempMax = tempMax + 2.0;
+    final int tempDivisions = (extendedTempMax - extendedTempMin) > 0
+        ? (extendedTempMax - extendedTempMin).toInt()
+        : 1;
+
+    // Para la humedad se utiliza el rango definido
+    final double displayHumMin =
+        currentHumidity < humMin ? currentHumidity : humMin;
+    final double displayHumMax =
+        currentHumidity > humMax ? currentHumidity : humMax;
+    final int humDivisions = (displayHumMax - displayHumMin) > 0
+        ? (displayHumMax - displayHumMin).toInt()
+        : 1;
+
     return Container(
       width: 220,
       padding: const EdgeInsets.all(12),
@@ -399,22 +567,109 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(2, 2),
-          ),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(2, 2))
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const Text('Sensores',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text('Temp: $tempMin°C - $tempMax°C'),
+          const Text('Temperatura',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          Column(
+            children: [
+              SizedBox(
+                height: circleSize,
+                width: circleSize,
+                child: CircularProgressIndicator(
+                  value: (currentTemperature - extendedTempMin) /
+                      (extendedTempMax - extendedTempMin),
+                  strokeWidth: 8,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Colors.red),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${currentTemperature.toStringAsFixed(2)}°',
+                style: const TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+              ),
+            ],
+          ),
+          Slider(
+            value: currentTemperature,
+            min: extendedTempMin,
+            max: extendedTempMax,
+            divisions: tempDivisions,
+            label: currentTemperature.toStringAsFixed(2),
+            onChanged: (value) {
+              if (!mounted) return;
+              setState(() {
+                currentTemperature = value;
+              });
+            },
+            onChangeEnd: (value) {
+              _publishMqttMessage(
+                'logix/adjustment',
+                json.encode({"new_temp": value}),
+              );
+              // Borramos la alerta tras el ajuste de temperatura
+              if (alertMessage.isNotEmpty) {
+                setState(() {
+                  alertMessage = "";
+                });
+              }
+            },
+          ),
           const SizedBox(height: 8),
-          Text('Hum: $humMin% - $humMax%'),
+          const Text('Humedad',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          Column(
+            children: [
+              SizedBox(
+                height: circleSize,
+                width: circleSize,
+                child: CircularProgressIndicator(
+                  value: (currentHumidity - displayHumMin) /
+                      (displayHumMax - displayHumMin),
+                  strokeWidth: 8,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${currentHumidity.toStringAsFixed(0)}%',
+                style: const TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+              ),
+            ],
+          ),
+          Slider(
+            value: currentHumidity,
+            min: displayHumMin,
+            max: displayHumMax,
+            divisions: humDivisions,
+            label: currentHumidity.toStringAsFixed(0),
+            onChanged: (value) {
+              if (!mounted) return;
+              setState(() {
+                currentHumidity = value;
+              });
+            },
+          ),
           const SizedBox(height: 16),
-          // Botón para enviar comando usando las coordenadas del query (origen y destino)
           ElevatedButton(
             onPressed: () {
               if (origen != null && destino != null) {
@@ -425,21 +680,29 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
                   "longdestino": destino!.longitude,
                 };
                 final message = json.encode(commandPayload);
-                debugPrint("Antes de iniciar viaje: Publicando comando: $message");
+                debugPrint("Iniciando viaje: Publicando comando: $message");
                 _publishMqttMessage('logix/gps/command', message);
+
+                String ttsMessage =
+                    "Viaje iniciado. La temperatura actual es de ${currentTemperature.toStringAsFixed(2)} grados y la humedad es de ${currentHumidity.toStringAsFixed(0)} por ciento.";
+                if (currentTemperature < tempMin || currentTemperature > tempMax) {
+                  ttsMessage += " Atención, la temperatura está fuera del rango permitido.";
+                }
+                if (currentHumidity < humMin || currentHumidity > humMax) {
+                  ttsMessage += " Atención, la humedad está fuera del rango permitido.";
+                }
+                _speak(ttsMessage);
               } else {
                 debugPrint("Las coordenadas aún no están disponibles");
               }
             },
-            child: const Text("Enviar comando"),
+            child: const Text("Iniciar viaje"),
           ),
           const SizedBox(height: 16),
-          // Botón para iniciar la simulación del viaje
           ElevatedButton(
-            onPressed: () {
-              _simulateVehicleMovement();
-            },
-            child: const Text('Iniciar viaje'),
+            onPressed: _toggleTrip,
+            style: ElevatedButton.styleFrom(iconColor: Colors.redAccent),
+            child: Text(_isCancelled ? "Reiniciar viaje" : "Cancelar viaje"),
           ),
         ],
       ),
