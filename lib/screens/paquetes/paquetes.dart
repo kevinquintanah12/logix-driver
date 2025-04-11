@@ -40,7 +40,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primaryBlue,
-        title: const Text('Paquetes'),
+        title: const Text('Paquetes o no xd'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -173,7 +173,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
               itemBuilder: (context, index) {
                 final entrega = entregas[index];
                 final paquete = entrega['paquete'] ?? {};
-                final destinatario = entrega['destinatario'] ?? {};
+                final destinatario = paquete['producto']?['destinatario'] ?? {};
 
                 return _buildPackageCard(
                   title: '${paquete['producto']['id'] ?? 'Sin ID'} — ${entrega['fechaEntrega'] ?? 'Fecha desconocida'}',
