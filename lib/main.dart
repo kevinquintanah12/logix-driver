@@ -1,6 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Asegúrate de que este archivo tenga la configuración de Firebase
+import 'firebase_options.dart'; // Asegurate de que este archivo tenga la configuración de Firebase
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,21 +25,19 @@ Future<ValueNotifier<GraphQLClient>> getClient() async {
     },
   );
 
-  final client = ValueNotifier<GraphQLClient>(
+  return ValueNotifier<GraphQLClient>(
     GraphQLClient(
       cache: GraphQLCache(store: InMemoryStore()),
       link: httpLink,
     ),
   );
-
-  return client;
 }
 
 /// Configuración de notificaciones push con Firebase Cloud Messaging
 Future<void> setupPushNotifications() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-  // Solicitar permisos para notificaciones (especialmente en iOS y macOS)
+  // Solicita permisos para notificaciones (especialmente en iOS y macOS)
   NotificationSettings settings = await messaging.requestPermission(
     alert: true,
     badge: true,
@@ -59,27 +58,34 @@ Future<void> setupPushNotifications() async {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     if (message.notification != null) {
       print('Mensaje recibido en foreground: ${message.notification!.title}');
-      // Puedes implementar lógica adicional para mostrar una notificación local o actualizar la UI.
+      // Se puede implementar lógica adicional para mostrar una notificación local o actualizar la UI.
     }
   });
 
-  // Escuchar mensajes cuando la app se abre desde el background al tocar una notificación
+  // Escuchar mensajes cuando la app se abre desde el background tras tocar una notificación
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     if (message.notification != null) {
       print('La app fue abierta desde una notificación: ${message.notification!.title}');
-      // Por ejemplo, navega a una pantalla específica.
+      // Por ejemplo, navegar a una pantalla específica.
     }
   });
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Inicializa Firebase con la configuración específica de cada plataforma
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  // Configura notificaciones push
-  await setupPushNotifications();
+
+  // Si la plataforma es Web o Windows, no se inicializa Firebase
+  if (!kIsWeb && defaultTargetPlatform != TargetPlatform.windows) {
+    // Inicializa Firebase con la configuración específica de cada plataforma
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // Configura notificaciones push en plataformas compatibles
+    await setupPushNotifications();
+  } else {
+    print('Firebase y sus notificaciones NO se inicializan en Web o Windows.');
+  }
+
   runApp(MyApp());
 }
 
@@ -88,8 +94,7 @@ class MyApp extends StatelessWidget {
   MyApp({super.key});
 
   // GlobalKey para acceder al estado del GraphQLProvider y actualizar el cliente si es necesario
-  final GlobalKey<_GraphQLProviderState> _clientKey =
-      GlobalKey<_GraphQLProviderState>();
+  final GlobalKey<_GraphQLProviderState> _clientKey = GlobalKey<_GraphQLProviderState>();
 
   @override
   Widget build(BuildContext context) {
@@ -163,8 +168,7 @@ class _GraphQLProviderState extends State<GraphQLProvider> {
 
 /// Función auxiliar para actualizar el cliente GraphQL desde cualquier parte de la aplicación
 void updateGraphQLClient(BuildContext context) async {
-  final _GraphQLProviderState? state =
-      context.findAncestorStateOfType<_GraphQLProviderState>();
+  final _GraphQLProviderState? state = context.findAncestorStateOfType<_GraphQLProviderState>();
   if (state != null) {
     await state.refreshClient();
     print("Cliente GraphQL actualizado correctamente.");

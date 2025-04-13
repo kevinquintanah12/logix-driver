@@ -42,9 +42,13 @@ dependencies:
   image: ^4.0.17 # Para procesar imágenes
   mqtt_client: ^9.6.1
   flutter_tts: ^3.5.0
-  firebase_core: ^2.27.0
   graphql_flutter: ^5.0.1
   firebase_messaging: ^14.7.2
+  firebase_core: ^2.27.0
+
+ 
+  flutterfire_cli: ^0.2.5
+
 
   
   

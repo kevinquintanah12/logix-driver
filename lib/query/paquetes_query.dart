@@ -6,18 +6,19 @@ const String queryPorEntregar = """
         id
         producto {
           id
-        }
-      }
-      destinatario {
-        nombre
-        latitud
-        longitud
+          destinatario {
+        		nombre
+        		latitud
+        		longitud
+      		}
+      	}
       }
       estado
       fechaEntrega
     }
   }
 """;
+
 
 const String queryEntregadas = """
   query {
@@ -27,12 +28,12 @@ const String queryEntregadas = """
         id
         producto {
           id
-        }
-      }
-      destinatario {
-        nombre
-        latitud
-        longitud
+          destinatario {
+        		nombre
+        		latitud
+        		longitud
+      		}
+      	}
       }
       estado
       fechaEntrega

@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:latlong2/latlong.dart';
@@ -10,7 +10,9 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 class RutaDetalleScreen extends StatefulWidget {
-  const RutaDetalleScreen({Key? key}) : super(key: key);
+  final int routeId;  // Recibimos el id de la ruta seleccionada
+
+  const RutaDetalleScreen({Key? key, required this.routeId}) : super(key: key);
 
   @override
   _RutaDetalleScreenState createState() => _RutaDetalleScreenState();
@@ -35,6 +37,8 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
   final String _mapboxToken =
       'pk.eyJ1IjoiZGF5a2V2MTIiLCJhIjoiY204MTd5NzR3MGdxYTJqcGlsa29odnQ5YiJ9.tbAEt453VxfJoDatpU72YQ';
 
+  // Variable para la IP del broker MQTT (valor inicial por defecto)
+  String mqttBrokerIP = '10.40.6.176';
   late MqttServerClient mqttClient;
 
   double _sensorPanelTop = 100;
@@ -43,14 +47,26 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
   // Variable para controlar el estado del botón de cancelar/reiniciar viaje
   bool _isCancelled = false;
 
+  // Controlador para modificar la IP mediante UI
+  final TextEditingController ipController = TextEditingController();
+
   // Instancia de FlutterTts
   final FlutterTts flutterTts = FlutterTts();
+
+  // Timer para enviar datos de sensores periodicamente
+  Timer? sensorTimer;
 
   @override
   void initState() {
     super.initState();
     mapController = MapController();
-    _connectToMqtt();
+    ipController.text = mqttBrokerIP; // Asigna la IP predeterminada al TextField.
+    _connectToMqtt(); // Conexión inicial al broker MQTT.
+
+    // Iniciar Timer para enviar datos cada 60 segundos
+    sensorTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+      _enviarDatosSensoresPeriodicamente();
+    });
   }
 
   @override
@@ -62,8 +78,61 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     }
   }
 
+  // Función para enviar datos de sensores usando GraphQL Mutation
+  Future<void> _enviarDatosSensoresPeriodicamente() async {
+    if (origen != null) {
+      final client = GraphQLProvider.of(context).value;
+      final mutation = gql(r'''
+        mutation CrearSensorRuta(
+          $rutaId: ID!, 
+          $latitud: Float!, 
+          $longitud: Float!, 
+          $temperatura: Float!, 
+          $humedad: Float!
+        ) {
+          crearSensorRuta(
+            rutaId: $rutaId,
+            latitud: $latitud,
+            longitud: $longitud,
+            temperatura: $temperatura,
+            humedad: $humedad
+          ) {
+            sensor {
+              id
+              timestamp
+            }
+          }
+        }
+      ''');
+
+      final variables = {
+        'rutaId': widget.routeId,  // Usamos el id recibido desde el widget
+        'latitud': origen!.latitude,
+        'longitud': origen!.longitude,
+        'temperatura': currentTemperature,
+        'humedad': currentHumidity,
+      };
+
+      try {
+        final result = await client.mutate(MutationOptions(
+          document: mutation,
+          variables: variables,
+        ));
+
+        if (result.hasException) {
+          debugPrint('Error enviando datos sensores: ${result.exception.toString()}');
+        } else {
+          debugPrint('Datos de sensores enviados: ${result.data}');
+        }
+      } catch (e) {
+        debugPrint('Excepción al enviar datos sensores: $e');
+      }
+    }
+  }
+
+  // Conexión MQTT
   Future<void> _connectToMqtt() async {
-    mqttClient = MqttServerClient('10.40.6.176', '');
+    mqttClient = MqttServerClient(mqttBrokerIP, '');
     mqttClient.port = 1883;
     mqttClient.logging(on: true);
     mqttClient.keepAlivePeriod = 20;
@@ -72,8 +141,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     mqttClient.onSubscribed = _onMqttSubscribed;
 
     final connMess = MqttConnectMessage()
-        .withClientIdentifier(
-            'flutter_client_${DateTime.now().millisecondsSinceEpoch}')
+        .withClientIdentifier('flutter_client_${DateTime.now().millisecondsSinceEpoch}')
         .startClean()
         .withWillQos(MqttQos.atLeastOnce);
     mqttClient.connectionMessage = connMess;
@@ -85,6 +153,13 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       mqttClient.disconnect();
     }
     mqttClient.updates!.listen(_onMqttMessage);
+  }
+
+  // Reconexión MQTT cuando se cambia la IP
+  Future<void> _reconnectToMqttWithNewIP(String newIP) async {
+    mqttBrokerIP = newIP;
+    mqttClient.disconnect();
+    await _connectToMqtt();
   }
 
   void _onMqttConnected() {
@@ -115,9 +190,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
 
     if (topic == 'logix/gps/command') {
       _handleGpsCommand(message);
-    }
-    // Actualización de la posición en "logix/gps"
-    else if (topic == 'logix/gps') {
+    } else if (topic == 'logix/gps') {
       try {
         final data = json.decode(message);
         if (data['lat'] != null && data['lon'] != null) {
@@ -137,9 +210,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       } catch (e) {
         debugPrint('Error al parsear mensaje gps: $e');
       }
-    }
-    // Actualización de la temperatura
-    else if (topic == 'logix/temperature') {
+    } else if (topic == 'logix/temperature') {
       try {
         final data = json.decode(message);
         if (data['temperature'] != null) {
@@ -153,9 +224,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       } catch (e) {
         debugPrint('Error al parsear temperatura: $e');
       }
-    }
-    // Actualización de la humedad
-    else if (topic == 'logix/humidity') {
+    } else if (topic == 'logix/humidity') {
       try {
         final data = json.decode(message);
         if (data['humidity'] != null) {
@@ -169,9 +238,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
       } catch (e) {
         debugPrint('Error al parsear humedad: $e');
       }
-    }
-    // Recepción y muestra de alertas del IoT Sensor, con lectura TTS
-    else if (topic == 'logix/alerts') {
+    } else if (topic == 'logix/alerts') {
       try {
         final data = json.decode(message);
         if (data['alert'] != null) {
@@ -179,7 +246,6 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
           setState(() {
             alertMessage = data['alert'];
           });
-          // Se lee la alerta usando TTS
           _speak(alertMessage);
         }
       } catch (e) {
@@ -188,7 +254,6 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     }
   }
 
-  // Función para leer la actualización de sensores mediante TTS
   Future<void> _speakSensorStatus() async {
     if (!mounted) return;
     String message =
@@ -238,11 +303,12 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     }
   }
 
+  // Aqui usamos el routeId (widget.routeId) en el query para obtener detalles de la ruta seleccionada.
   Future<void> _fetchRutaDetalle() async {
     final client = GraphQLProvider.of(context).value;
-    const String query = r'''
-      query GetRutaDetalle {
-        ruta(id: 1) {
+    final String query = r'''
+      query GetRutaDetalle($id: ID!) {
+        ruta(id: $id) {
           entregas {
             paquete {
               producto {
@@ -276,7 +342,10 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     ''';
 
     final QueryResult result = await client.query(
-      QueryOptions(document: gql(query)),
+      QueryOptions(
+        document: gql(query),
+        variables: {'id': widget.routeId}, // Pasamos el routeId recibido
+      ),
     );
 
     if (result.hasException) {
@@ -313,7 +382,6 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
         humMin = double.parse(humData['rangoMinimo'].toString());
         humMax = double.parse(humData['rangoMaximo'].toString());
 
-        // Inicializamos currentTemperature y currentHumidity
         currentTemperature = (tempMin + tempMax) / 2;
         currentHumidity = ((humMin + humMax) / 2).clamp(humMin, humMax);
       });
@@ -378,7 +446,6 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     return "Desconocida";
   }
 
-  // Función para manejar el botón de cancelar/reiniciar viaje
   void _toggleTrip() {
     if (!_isCancelled) {
       _publishMqttMessage(
@@ -387,10 +454,8 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
           'logix/gps/control', json.encode({"command": "off"}));
       setState(() {
         _isCancelled = true;
-        // Regresar la posición del vehículo al inicio (origen)
         vehiclePosition = origen;
       });
-      // Se reposiciona el mapa al origen
       if (origen != null) {
         mapController.move(origen!, 15.0);
       }
@@ -414,11 +479,18 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     debugPrint('Publisher envía: $message a $topic');
   }
 
-  // Función para hablar el mensaje mediante TTS
   Future<void> _speak(String message) async {
     await flutterTts.setLanguage("es-ES");
     await flutterTts.setPitch(1.0);
     await flutterTts.speak(message);
+  }
+
+  @override
+  void dispose() {
+    ipController.dispose();
+    mqttClient.disconnect();
+    sensorTimer?.cancel(); // Cancelamos el timer
+    super.dispose();
   }
 
   @override
@@ -542,15 +614,12 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
     const double circleSize = 30.0;
     const double fontSize = 18.0;
 
-    // Para la barra de temperatura, se extiende el rango:
-    // 1 grado menos que el límite inferior y 2 grados más que el límite superior.
     final double extendedTempMin = tempMin - 1.0;
     final double extendedTempMax = tempMax + 2.0;
     final int tempDivisions = (extendedTempMax - extendedTempMin) > 0
         ? (extendedTempMax - extendedTempMin).toInt()
         : 1;
 
-    // Para la humedad se utiliza el rango definido
     final double displayHumMin =
         currentHumidity < humMin ? currentHumidity : humMin;
     final double displayHumMax =
@@ -621,7 +690,6 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
                 'logix/adjustment',
                 json.encode({"new_temp": value}),
               );
-              // Borramos la alerta tras el ajuste de temperatura
               if (alertMessage.isNotEmpty) {
                 setState(() {
                   alertMessage = "";
@@ -685,7 +753,8 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
 
                 String ttsMessage =
                     "Viaje iniciado. La temperatura actual es de ${currentTemperature.toStringAsFixed(2)} grados y la humedad es de ${currentHumidity.toStringAsFixed(0)} por ciento.";
-                if (currentTemperature < tempMin || currentTemperature > tempMax) {
+                if (currentTemperature < tempMin ||
+                    currentTemperature > tempMax) {
                   ttsMessage += " Atención, la temperatura está fuera del rango permitido.";
                 }
                 if (currentHumidity < humMin || currentHumidity > humMax) {

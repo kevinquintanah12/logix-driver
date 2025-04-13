@@ -95,10 +95,14 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (context) => const PaquetesAsignados(),
       );
 
-     case rutasDetallada:
+     
+
+    case rutasDetallada:
+      final args = settings.arguments as int; // si estás enviando un int directamente
       return MaterialPageRoute(
-        builder: (context) => const RutaDetalleScreen(),
+        builder: (context) => RutaDetalleScreen(routeId: args),
       );
+
 
     case pinScreenRoute:
       return MaterialPageRoute(

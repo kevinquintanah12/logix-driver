@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'app-driver-d1bfb.firebasestorage.app',
     measurementId: 'G-6VW4T78RXN',
   );
+
 }

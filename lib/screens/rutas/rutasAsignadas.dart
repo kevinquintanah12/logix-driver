@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:intl/intl.dart';
+import 'rutasDetallada.dart'; // Importa la pantalla de detalle de ruta
 
 class RutasAsignadas extends StatefulWidget {
   const RutasAsignadas({Key? key}) : super(key: key);
@@ -98,7 +99,6 @@ class _RutasAsignadasState extends State<RutasAsignadas>
         }
 
         final rutas = snapshot.data as List;
-        // Definir el formato deseado: 'dd/MM/yyyy'
         final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
 
         return Padding(
@@ -107,7 +107,6 @@ class _RutasAsignadasState extends State<RutasAsignadas>
             itemCount: rutas.length,
             itemBuilder: (context, index) {
               final ruta = rutas[index];
-              // Convertir y formatear la fecha de inicio
               final fechaInicio = DateTime.parse(ruta['fechaInicio']);
               final fechaFormateada = dateFormat.format(fechaInicio);
 
@@ -116,6 +115,7 @@ class _RutasAsignadasState extends State<RutasAsignadas>
                 address: ruta['vehiculo']['modelo'],
                 info:
                     'Ruta: ${ruta['id']} | ${ruta['distancia']} km | ${ruta['conductor']['nombre']}',
+                routeId: ruta['id'],
               );
             },
           ),
@@ -145,7 +145,6 @@ class _RutasAsignadasState extends State<RutasAsignadas>
             itemCount: rutas.length,
             itemBuilder: (context, index) {
               final ruta = rutas[index];
-              // Convertir y formatear la fecha de finalización
               final fechaFin = DateTime.parse(ruta['fechaFin']);
               final fechaFormateada = dateFormat.format(fechaFin);
 
@@ -154,6 +153,7 @@ class _RutasAsignadasState extends State<RutasAsignadas>
                 address: ruta['vehiculo']['modelo'],
                 info:
                     'Stop: ${ruta['id']} | ${ruta['distancia']} km | ${ruta['conductor']['nombre']}',
+                routeId: ruta['id'],
               );
             },
           ),
@@ -188,14 +188,12 @@ class _RutasAsignadasState extends State<RutasAsignadas>
     final result = await client.query(
       QueryOptions(
         document: gql(query),
-        variables: {},
       ),
     );
 
     if (result.hasException) {
       throw Exception('Error al obtener rutas: ${result.exception}');
     }
-
     return result.data?['rutasPorEstado'] ?? [];
   }
 
@@ -203,6 +201,7 @@ class _RutasAsignadasState extends State<RutasAsignadas>
     required String title,
     required String address,
     required String info,
+    required routeId,
   }) {
     return Card(
       elevation: 2,
@@ -228,7 +227,12 @@ class _RutasAsignadasState extends State<RutasAsignadas>
                 IconButton(
                   icon: const Icon(Icons.info_outline),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/rutasDetallada');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RutaDetalleScreen(routeId: routeId),
+                      ),
+                    );
                   },
                 ),
               ],

@@ -4,7 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shop/query/paquetes_query.dart';  // Asegúrate de que las consultas estén bien definidas
 
 class PaquetesAsignados extends StatefulWidget {
-  const PaquetesAsignados({Key? key}) : super(key: key);
+  const PaquetesAsignados({super.key});
 
   @override
   State<PaquetesAsignados> createState() => _PaquetesAsignadosState();
@@ -13,6 +13,7 @@ class PaquetesAsignados extends StatefulWidget {
 class _PaquetesAsignadosState extends State<PaquetesAsignados>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool onDuty = true;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
@@ -39,7 +40,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primaryBlue,
-        title: const Text('Paquetes'),
+        title: const Text('Paquetes o no xd'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -88,17 +89,42 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
             style: const TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 8),
-          Center(
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: Colors.white,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.grey,
-              tabs: const [
-                Tab(text: 'Pendientes'),
-                Tab(text: 'Completado'),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const Text(
+                      'Disponible',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    Switch(
+                      activeColor: Colors.white,
+                      activeTrackColor: Colors.lightBlueAccent,
+                      value: onDuty,
+                      onChanged: (value) {
+                        setState(() {
+                          onDuty = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.white,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey,
+                  tabs: const [
+                    Tab(text: 'Por Hacer'),
+                    Tab(text: 'Completado'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -121,7 +147,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
         return Query(
           options: QueryOptions(
             document: gql(query),
-            context: Context().withEntry(
+            context: const Context().withEntry(
               HttpLinkHeaders(
                 headers: {"Authorization": "Bearer $token"},
               ),
@@ -147,7 +173,7 @@ class _PaquetesAsignadosState extends State<PaquetesAsignados>
               itemBuilder: (context, index) {
                 final entrega = entregas[index];
                 final paquete = entrega['paquete'] ?? {};
-                final destinatario = entrega['destinatario'] ?? {};
+                final destinatario = paquete['producto']?['destinatario'] ?? {};
 
                 return _buildPackageCard(
                   title: '${paquete['producto']['id'] ?? 'Sin ID'} — ${entrega['fechaEntrega'] ?? 'Fecha desconocida'}',
