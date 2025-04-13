@@ -174,7 +174,7 @@ class _RutaDetalleScreenState extends State<RutaDetalleScreen> {
   }
 
   void _onMqttDisconnected() {
-    debugPrint('Desconectado del broker MQTT');
+    debugPrint('Desconectado del broker MQTTT');
   }
 
   void _onMqttSubscribed(String topic) {

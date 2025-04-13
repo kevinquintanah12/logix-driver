@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:intl/intl.dart';
-import 'rutasDetallada.dart'; // Importa la pantalla de detalle de ruta
+import 'rutasDetallada.dart'; // Importab la pantalla de detalle de ruta
 
 class RutasAsignadas extends StatefulWidget {
   const RutasAsignadas({Key? key}) : super(key: key);
